@@ -70,7 +70,7 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                ActivityLogTimelineTableAction::make('Activities')
+                ActivityLogTimelineTableAction::make('Logs')
                     ->timelineIcons([
                         'created' => 'heroicon-m-check-badge',
                         'updated' => 'heroicon-m-pencil-square',
