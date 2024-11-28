@@ -3,6 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Policies\ActivityPolicy;
+use Illuminate\Support\Facades\Gate;
+use Spatie\Activitylog\Models\Activity;
+
 
 class AppServiceProvider extends ServiceProvider
 {

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
+use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -64,6 +65,15 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                ActivityLogTimelineTableAction::make('Activities')
+                    ->timelineIcons([
+                        'created' => 'heroicon-m-check-badge',
+                        'updated' => 'heroicon-m-pencil-square',
+                    ])
+                    ->timelineIconColors([
+                        'created' => 'info',
+                        'updated' => 'warning',
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -87,6 +97,7 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
             'view' => Pages\ViewUser::route('/{record}'),
+
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }

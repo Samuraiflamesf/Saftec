@@ -36,6 +36,7 @@ return [
     'nav.role.icon' => 'heroicon-o-shield-check',
     'resource.label.role' => 'Função',
     'resource.label.roles' => 'Funções',
+    
 
     /*
     |--------------------------------------------------------------------------

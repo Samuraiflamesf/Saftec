@@ -19,6 +19,8 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
 use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
+use Rmsramos\Activitylog\ActivitylogPlugin;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -41,7 +43,14 @@ class AdminPanelProvider extends PanelProvider
                     ->setNavigationLabel('Meu Perfil')
                     ->setNavigationGroup('Configurações')
                     ->setIcon('heroicon-o-user'),
-
+                ActivitylogPlugin::make()
+                    ->label('Log')
+                    ->pluralLabel('Logs')
+                    ->navigationItem(true)
+                    ->navigationGroup('Configurações')
+                    ->navigationIcon('heroicon-o-shield-exclamation')
+                    ->navigationCountBadge(true)
+                    ->navigationSort(2),
 
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
