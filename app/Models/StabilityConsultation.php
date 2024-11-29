@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -32,6 +33,7 @@ class StabilityConsultation extends Model
         'role',
         'record_date',
         'protocol_number',
+        'user_create_id',
     ];
     protected $casts = [
         'quantity' => 'array',
@@ -66,5 +68,28 @@ class StabilityConsultation extends Model
                 'record_date',
                 'protocol_number',
             ]);
+    }
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'user_create_id');
+    }
+    public static function boot()
+    {
+        parent::boot();
+
+        // Gerar número de protocolo automaticamente
+        static::creating(function ($model) {
+            do {
+                $protocolNumber = now()->format('Ymd') . strtoupper(Str::random(6));
+            } while (self::where('protocol_number', $protocolNumber)->exists());
+
+            $model->protocol_number = $protocolNumber;
+        });
+        static::saving(function ($model) {
+            if ($model->returned_to_storage_at && $model->last_verification_at) {
+                $difference = $model->returned_to_storage_at->diffInMinutes($model->last_verification_at);
+                $model->estimated_exposure_time = $difference;
+            }
+        });
     }
 }

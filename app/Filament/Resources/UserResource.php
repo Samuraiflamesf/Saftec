@@ -71,6 +71,10 @@ class UserResource extends Resource
                     ->preload()
                     ->required()
                     ->searchable(),
+                TextInput::make('name_function')
+                    ->required()
+                    ->label('Cargo/Função:')
+                    ->maxLength(255),
 
             ]);
     }

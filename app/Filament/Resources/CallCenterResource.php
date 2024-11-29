@@ -338,6 +338,8 @@ class CallCenterResource extends Resource
                             ->markdown(),
                     ])
                     ->columns(2),
+
+
             ])->columnSpan(2),
 
             // Segunda seção: informações adicionais e agrupadas

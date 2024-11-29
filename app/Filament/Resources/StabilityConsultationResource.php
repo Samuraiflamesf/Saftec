@@ -2,91 +2,130 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\StabilityConsultationResource\Pages;
-use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
-use App\Models\StabilityConsultation;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use App\Models\StabilityConsultation;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\StabilityConsultationResource\Pages;
+use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
 
 class StabilityConsultationResource extends Resource
 {
     protected static ?string $model = StabilityConsultation::class;
 
-    protected static ?string $modelLabel = 'Estabilidade de Temperatura';
+    protected static ?string $modelLabel = 'Temperatura';
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
 
-    protected static ?string $navigationIcon = 'heroicon-o-bookmark';
+    protected static ?string $navigationIcon = 'heroicon-o-plus-circle';
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-bookmark';
+        return 'heroicon-o-plus-circle';
     }
     public static function getNavigationLabel(): string
     {
-        return 'Estabilidade de Temperatura';
+        return 'Temperatura';
     }
     public static function getNavigationGroup(): ?string
     {
         return 'Administração';
     }
-
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('institution_name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('cnpj')
-                    ->required()
-                    ->maxLength(18),
-                Forms\Components\DateTimePicker::make('last_verification_at'),
-                Forms\Components\DateTimePicker::make('excursion_verification_at'),
-                Forms\Components\TextInput::make('estimated_exposure_time')
-                    ->numeric(),
-                Forms\Components\DateTimePicker::make('returned_to_storage_at'),
-                Forms\Components\TextInput::make('max_exposed_temperature')
-                    ->numeric(),
-                Forms\Components\TextInput::make('min_exposed_temperature')
-                    ->numeric(),
-                Forms\Components\TextInput::make('medicament_name')
-                    ->required(),
-                Forms\Components\TextInput::make('medicament_manufacturer')
-                    ->required(),
-                Forms\Components\TextInput::make('medicament_batch')
-                    ->required(),
-                Forms\Components\TextInput::make('medicament_date')
-                    ->required(),
-                Forms\Components\TextInput::make('medicament_quantity')
-                    ->required(),
-                Forms\Components\TextInput::make('order_number')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('distribution_number')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('observations')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('filled_by')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('role')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Textarea::make('file_monitor_temp')
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('protocol_number')
-                    ->required()
-                    ->maxLength(255),
+                Wizard::make([
+                    Wizard\Step::make('Detalhes Gerais')
+                        ->schema([
+                            Forms\Components\TextInput::make('institution_name')
+                                ->label('Nome da Instituição:')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('cnpj')
+                                ->label('CNPJ:')
+                                ->required()
+                                ->maxLength(18),
+                            Forms\Components\DateTimePicker::make('last_verification_at')
+                                ->label('Última Verificação')
+                                ->required()
+                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.'),
+                            Forms\Components\DateTimePicker::make('excursion_verification_at')
+                                ->label('Verificação da Excursão de temperatura')
+                                ->required()
+                                ->helperText('Data e horário da verificação da excursão de temperatura.'),
+                            Forms\Components\TextInput::make('estimated_exposure_time')
+                                ->label('Tempo Estimado de Exposição')
+                                ->numeric()
+                                ->helperText('Tempo de exposição estimada de exposição à temperatura não recomendada.'),
+                            Forms\Components\DateTimePicker::make('returned_to_storage_at')
+                                ->label('Retorno ao Armazenamento')
+                                ->required()
+                                ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.'),
+                        ])
+                        ->columns(2),
+
+                    Wizard\Step::make('Dados de Exposição')
+                        ->schema([
+                            Forms\Components\TextInput::make('max_exposed_temperature')
+                                ->label('Temperatura Máxima Exposta')
+                                ->numeric(),
+                            Forms\Components\TextInput::make('min_exposed_temperature')
+                                ->label('Temperatura Mínima Exposta')
+                                ->numeric(),
+                            Repeater::make('medicamentos')
+                                ->label('Medicamentos')
+                                ->schema([
+                                    Forms\Components\TextInput::make('medicament_name')
+                                        ->label('Nome do Medicamento')
+                                        ->required(),
+                                    Forms\Components\TextInput::make('medicament_manufacturer')
+                                        ->label('Fabricante do Medicamento')
+                                        ->required(),
+                                    Forms\Components\TextInput::make('medicament_batch')
+                                        ->label('Lote do Medicamento')
+                                        ->required(),
+                                    Forms\Components\TextInput::make('medicament_date')
+                                        ->label('Data do Medicamento')
+                                        ->required(),
+                                    Forms\Components\TextInput::make('medicament_quantity')
+                                        ->label('Quantidade do Medicamento')
+                                        ->required(),
+                                ])
+                                ->nullable() // Permite que o campo seja nulo
+                                ->columns(1),
+
+                        ])
+                        ->columns(2),
+
+                    Wizard\Step::make('Informações do Pedido')
+                        ->schema([
+                            Forms\Components\TextInput::make('order_number')
+                                ->label('Número do Pedido')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('distribution_number')
+                                ->label('Número de Distribuição')
+                                ->required()
+                                ->maxLength(255),
+                            Forms\Components\Textarea::make('observations')
+                                ->label('Observações')
+                                ->columnSpanFull(),
+                            Forms\Components\Textarea::make('file_monitor_temp')
+                                ->label('Monitoramento de Temperatura (Arquivo)')
+                                ->columnSpanFull(),
+                        ]),
+                ])->columnSpan('full'),
             ]);
     }
 

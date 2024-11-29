@@ -21,13 +21,14 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'name_function'
     ];
-    
+
     use LogsActivity;
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email']);
+            ->logOnly(['name', 'email', 'password', 'name_function']);
     }
 
     /**

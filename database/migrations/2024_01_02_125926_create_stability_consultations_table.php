@@ -35,6 +35,11 @@ return new class extends Migration
             $table->text('file_monitor_temp')->nullable();
             // Keys automatically
             $table->string('protocol_number')->unique();
+            $table->foreignId('user_create_id')
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('set null')
+                ->default(1);
             $table->softDeletes();
             $table->timestamps();
         });
