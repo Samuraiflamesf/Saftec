@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Form;
@@ -11,11 +10,15 @@ use Filament\Resources\Resource;
 use App\Models\StabilityConsultation;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\StabilityConsultationResource\Pages;
 use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Carbon\Carbon;
 
 class StabilityConsultationResource extends Resource
 {
@@ -61,46 +64,30 @@ class StabilityConsultationResource extends Resource
                                 ->label('Última Verificação')
                                 ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
                                 ->required()
-                                ->seconds(false)
-                                ->reactive()
-                                ->live(),
+                                ->seconds(false),
+                            // Campo de verificação da excursão de temperatura
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
                                 ->label('Verificação da Excursão de temperatura')
                                 ->helperText('Data e horário da verificação da excursão de temperatura.')
                                 ->required()
                                 ->seconds(false)
-                                ->reactive()
-                                ->live(),
+                                ->live(onBlur: true),
+
+                            // Campo de retorno ao armazenamento
                             Forms\Components\DateTimePicker::make('returned_to_storage_at')
                                 ->label('Retorno ao Armazenamento')
                                 ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.')
-                                ->seconds(false)
                                 ->required()
-                                ->reactive()
-                                ->live(),
+                                ->seconds(false)
+                                ->live(onBlur: true),
+
+                            // Campo para estimativa de tempo de exposição
                             Forms\Components\TextInput::make('estimated_exposure_time')
-                                ->label('Tempo Estimado de Exposição')
-                                ->helperText('Tempo de exposição estimada de exposição à temperatura não recomendada.')
-                                ->numeric()
-                                ->disabled()  // Desabilita o campo para não permitir edição manual
-                                ->dehydrateStateUsing(function ($state, $get) {
-                                    $lastVerificationAt = $get('last_verification_at');
-                                    $returnedToStorageAt = $get('returned_to_storage_at');
+                                ->label('Tempo Estimado de Exposição ')
+                                ->helperText('Tempo de exposição estimada à temperatura não recomendada em minutos.')
+                                ->numeric(),
 
-                                    if ($lastVerificationAt && $returnedToStorageAt) {
-                                        // Calcula a diferença entre as duas datas
-                                        $lastVerificationAt = Carbon::parse($lastVerificationAt);
-                                        $returnedToStorageAt = Carbon::parse($returnedToStorageAt);
 
-                                        // Calcula a diferença em minutos
-                                        $difference = $returnedToStorageAt->diffInMinutes($lastVerificationAt);
-
-                                        // Retorna o valor da diferença (em minutos)
-                                        return $difference;
-                                    }
-
-                                    return null;
-                                }),
 
                         ])
                         ->columns(2),

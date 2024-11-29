@@ -85,11 +85,5 @@ class StabilityConsultation extends Model
 
             $model->protocol_number = $protocolNumber;
         });
-        static::saving(function ($model) {
-            if ($model->returned_to_storage_at && $model->last_verification_at) {
-                $difference = $model->returned_to_storage_at->diffInMinutes($model->last_verification_at);
-                $model->estimated_exposure_time = $difference;
-            }
-        });
     }
 }
