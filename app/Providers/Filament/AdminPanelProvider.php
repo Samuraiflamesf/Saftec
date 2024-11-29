@@ -17,6 +17,10 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Leandrocfe\FilamentApexCharts\FilamentApexChartsPlugin;
+use Joaopaulolndev\FilamentEditProfile\FilamentEditProfilePlugin;
+use Rmsramos\Activitylog\ActivitylogPlugin;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -29,6 +33,30 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->colors([
                 'primary' => Color::Amber,
+            ])
+            ->navigationGroups([
+                'Cadastro Básico',
+                'Administração',
+                'Configurações',
+            ])
+            ->plugins([
+                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
+                FilamentApexChartsPlugin::make(),
+                FilamentEditProfilePlugin::make()
+                    ->slug('my-profile')
+                    ->setTitle('Meu Perfil')
+                    ->setNavigationLabel('Meu Perfil')
+                    ->setNavigationGroup('Configurações')
+                    ->setIcon('heroicon-o-user'),
+                ActivitylogPlugin::make()
+                    ->label('Log')
+                    ->pluralLabel('Logs')
+                    ->navigationItem(true)
+                    ->navigationGroup('Configurações')
+                    ->navigationIcon('heroicon-o-shield-exclamation')
+                    ->navigationCountBadge(true)
+                    ->navigationSort(2),
+
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
