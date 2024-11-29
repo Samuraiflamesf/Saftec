@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Form;
@@ -58,20 +59,49 @@ class StabilityConsultationResource extends Resource
                                 ->maxLength(18),
                             Forms\Components\DateTimePicker::make('last_verification_at')
                                 ->label('Última Verificação')
+                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
                                 ->required()
-                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.'),
+                                ->seconds(false)
+                                ->reactive()
+                                ->live(),
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
                                 ->label('Verificação da Excursão de temperatura')
+                                ->helperText('Data e horário da verificação da excursão de temperatura.')
                                 ->required()
-                                ->helperText('Data e horário da verificação da excursão de temperatura.'),
-                            Forms\Components\TextInput::make('estimated_exposure_time')
-                                ->label('Tempo Estimado de Exposição')
-                                ->numeric()
-                                ->helperText('Tempo de exposição estimada de exposição à temperatura não recomendada.'),
+                                ->seconds(false)
+                                ->reactive()
+                                ->live(),
                             Forms\Components\DateTimePicker::make('returned_to_storage_at')
                                 ->label('Retorno ao Armazenamento')
+                                ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.')
+                                ->seconds(false)
                                 ->required()
-                                ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.'),
+                                ->reactive()
+                                ->live(),
+                            Forms\Components\TextInput::make('estimated_exposure_time')
+                                ->label('Tempo Estimado de Exposição')
+                                ->helperText('Tempo de exposição estimada de exposição à temperatura não recomendada.')
+                                ->numeric()
+                                ->disabled()  // Desabilita o campo para não permitir edição manual
+                                ->dehydrateStateUsing(function ($state, $get) {
+                                    $lastVerificationAt = $get('last_verification_at');
+                                    $returnedToStorageAt = $get('returned_to_storage_at');
+
+                                    if ($lastVerificationAt && $returnedToStorageAt) {
+                                        // Calcula a diferença entre as duas datas
+                                        $lastVerificationAt = Carbon::parse($lastVerificationAt);
+                                        $returnedToStorageAt = Carbon::parse($returnedToStorageAt);
+
+                                        // Calcula a diferença em minutos
+                                        $difference = $returnedToStorageAt->diffInMinutes($lastVerificationAt);
+
+                                        // Retorna o valor da diferença (em minutos)
+                                        return $difference;
+                                    }
+
+                                    return null;
+                                }),
+
                         ])
                         ->columns(2),
 
