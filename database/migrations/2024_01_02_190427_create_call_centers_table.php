@@ -15,20 +15,25 @@ return new class extends Migration
             $table->id();
             $table->string('protocolo');
             $table->string('setor');
-            $table->string('unidade')->nullable();
-            $table->json('medicamentos')->nullable();
-            $table->string('resp_aquisicao')->nullable();
             $table->string('demandante')->nullable();
             $table->boolean('dado_sigiloso')->default(false);
-            $table->text('file_espelho')->nullable();
-            $table->json('attachments')->nullable();
-            $table->longText('obs')->nullable();
+            $table->string('unidade')->nullable();
+            $table->string('resp_aquisicao')->nullable();
             $table->string('date_dispensacao')->nullable();
-            $table->string('date_resposta')->nullable();
+            $table->json('medicamentos')->nullable();
             $table->foreignId('author_id')
                 ->nullable()
                 ->constrained('users')
                 ->onDelete('set null');
+            $table->string('date_resposta')->nullable();
+            $table->longText('obs')->nullable();
+            $table->text('file_espelho')->nullable();
+            $table->json('attachments')->nullable();
+            $table->foreignId('user_create_id')
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('set null')
+                ->default(1);
             $table->softDeletes();
             $table->timestamps();
         });

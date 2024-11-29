@@ -3,39 +3,40 @@
 namespace App\Filament\Resources;
 
 use Filament\Forms;
+use App\Models\User;
 use Filament\Tables;
+use Filament\Infolists;
 use Filament\Forms\Form;
 use App\Models\CallCenter;
 use Filament\Tables\Table;
-use Filament\Resources\Resource;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\RichEditor;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\CallCenterResource\Pages;
-use App\Filament\Resources\CallCenterResource\RelationManagers;
-use App\Models\User;
-use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Resources\Resource;
+use Illuminate\Support\HtmlString;
 use Infolists\Components\FileEntry;
 use Infolists\Components\ListEntry;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
-use Filament\Infolists\Components\RepeatableEntry;
-use Illuminate\Support\HtmlString;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Infolists\Components\Fieldset;
 use Filament\Forms\Components\TextInput;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Forms\Components\Wizard\Step;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\Group;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\Wizard\Step;
+use Filament\Infolists\Components\Fieldset;
 use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Filament\Resources\CallCenterResource\Pages;
 use Filament\Infolists\Components\Section as InfolistSection;
+use App\Filament\Resources\CallCenterResource\RelationManagers;
+use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 
 class CallCenterResource extends Resource
@@ -206,43 +207,55 @@ class CallCenterResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('protocolo')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('setor')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('unidade')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('resp_aquisicao')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('demandante')
-                    ->searchable(),
-                Tables\Columns\IconColumn::make('dado_sigiloso')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('date_dispensacao')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('date_resposta')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('user_create_id')
-                    ->numeric()
+                TextColumn::make('protocolo')
+                    ->label('Protocolo')
+                    ->searchable(), // Permite a busca por este campo
+
+                TextColumn::make('demandante')
+                    ->label('Demandante')
+                    ->searchable()
+                    ->sortable(), // Permite ordenar por este campo
+
+                TextColumn::make('setor')
+                    ->label('Setor')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'caj' => 'warning',
+                        'coafe' => 'info',
+                        'dasf_diretoria' => 'success',
+                        'cafab' => 'danger',
+                        default => 'gray', // Define uma cor padrão para valores não mapeados
+                    }),
+
+                TextColumn::make('unidade')
+                    ->label('Unidade')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('author_id')
-                    ->numeric()
+
+                TextColumn::make('creator.name')
+                    ->label('Responsável pelo Preenchimento')
+                    ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('setor')
+                    ->options([
+                        'caj' => 'CAJ',
+                        'coafe' => 'COAFE',
+                        'dasf_diretoria' => 'Diretoria',
+                        'cafab' => 'CAFAB',
+                    ])
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                ActivityLogTimelineTableAction::make('Logs')
+                    ->timelineIcons([
+                        'created' => 'heroicon-m-check-badge',
+                        'updated' => 'heroicon-m-pencil-square',
+                    ])
+                    ->timelineIconColors([
+                        'created' => 'info',
+                        'updated' => 'warning',
+                    ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -250,6 +263,121 @@ class CallCenterResource extends Resource
                 ]),
             ]);
     }
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            // Primeira seção: informações principais
+            InfolistSection::make([
+                Fieldset::make('Dados do Manifestante')
+                    ->schema([
+                        TextEntry::make('protocolo')
+                            ->size(TextEntry\TextEntrySize::Large)
+                            ->weight('bold')
+                            ->columnSpan(3)
+                            ->copyable()
+                            ->copyMessage('Copiado!')
+                            ->copyMessageDuration(1500),
+                        TextEntry::make('setor')
+                            ->badge()
+                            ->color(fn(string $state): string => match ($state) {
+                                'CAJ' => 'warning',
+                                'COAFE' => 'info',
+                                'Diretoria' => 'success',
+                                'CAFAB' => 'danger',
+                                default => 'gray',
+                            }),
+                        TextEntry::make('demandante')
+                            ->columnSpan(2)
+                            ->label('Demandante')
+                            ->copyable()
+                            ->copyMessage('Copiado!')
+                            ->copyMessageDuration(1500)
+                            ->placeholder('Dado Sigiloso'),
+
+                        TextEntry::make('unidade')
+                            ->label('Unidade')
+                            ->columnSpan(2)
+                            ->placeholder('Não Informada'),
+                    ])
+                    ->columns(4),
+                Fieldset::make('Informações Complementares')
+                    ->schema([
+                        TextEntry::make('resp_aquisicao')
+                            ->label('Responsável da Aquisição:')
+                            ->placeholder('Não Informada'),
+                        TextEntry::make('date_dispensacao')
+                            ->label('Data de Dispensação')
+                            ->placeholder('Não Informada')
+                            ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada'),
+
+                        Infolists\Components\TextEntry::make('medicamentos')
+                            ->label('Lista de Medicamentos')
+                            ->bulleted()
+                            ->formatStateUsing(function ($state) {
+                                return is_array($state) ? implode("\n", $state) : $state;
+                            })
+                            ->listWithLineBreaks()
+                            ->columnSpan(2) // Ocupar duas colunas
+                            ->placeholder('Sem Medicamentos cadastrados.'),
+                    ])
+                    ->columns(2),
+                Fieldset::make('Observações')
+                    ->schema([
+                        TextEntry::make('date_resposta')
+                            ->label(
+                                'Data de Resposta'
+                            )
+                            ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y') : 'Não Informada'),
+                        TextEntry::make('user.name')
+                            ->label('Autor da Resposta')
+                            ->color('primary'),
+                        TextEntry::make('obs')
+                            ->label('Observações')
+                            ->columnSpan(2) // Ocupar duas colunas
+                            ->placeholder('Sem Observações')
+                            ->markdown(),
+                    ])
+                    ->columns(2),
+            ])->columnSpan(2),
+
+            // Segunda seção: informações adicionais e agrupadas
+            InfolistSection::make([
+                Group::make([
+                    TextEntry::make('created_at')
+                        ->label('Criado em:')
+                        ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada'),
+                    TextEntry::make('updated_at')
+                        ->label('Atualizado em:')
+                        ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada'),
+
+                ])->columns(2),
+                TextEntry::make('creator.name')
+                    ->label('Responsável pelo Preenchimento')
+                    ->color('info'),
+
+                TextEntry::make('file_espelho')
+                    ->label('Anexo do Espelho:')
+                    ->placeholder('Sem anexo do espelho')
+                    ->listWithLineBreaks()->bulleted()
+                    ->formatStateUsing(function ($state) {
+                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                    })
+                    ->html(),
+
+                TextEntry::make('attachments')
+                    ->label('Anexos')
+                    ->placeholder('Sem anexos')
+                    ->listWithLineBreaks()->bulleted()
+                    ->formatStateUsing(function ($state) {
+                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                    })
+                    ->html(),
+            ])
+                ->columnSpan(1),
+        ])
+            ->columns(3); // Define o layout com três colunas
+    }
+
 
     public static function getRelations(): array
     {

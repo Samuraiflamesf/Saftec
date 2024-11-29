@@ -17,7 +17,27 @@ class StabilityConsultationResource extends Resource
 {
     protected static ?string $model = StabilityConsultation::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $modelLabel = 'Estabilidade de Temperatura';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    protected static ?string $navigationIcon = 'heroicon-o-bookmark';
+
+    public static function getNavigationIcon(): string
+    {
+        return 'heroicon-o-bookmark';
+    }
+    public static function getNavigationLabel(): string
+    {
+        return 'Estabilidade de Temperatura';
+    }
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Administração';
+    }
 
     public static function form(Form $form): Form
     {
