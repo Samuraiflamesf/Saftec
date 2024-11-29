@@ -2,45 +2,76 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms;
+use App\Models\User;
+use Filament\Tables;
+use Filament\Forms\Form;
+use Filament\Tables\Table;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Hash;
+use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\TextInput;
+use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\UserResource\Pages;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\UserResource\RelationManagers;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
-use App\Models\User;
-use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $modelLabel = 'Usuário';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+    public static function getNavigationLabel(): string
+    {
+        return 'Lista de Usuários';
+    }
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Cadastro Básico';
+    }
+    public static function getNavigationIcon(): string
+    {
+        return 'heroicon-o-user-group';
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->required()
+                    ->label('Nome Completo:')
                     ->maxLength(255),
-                Forms\Components\TextInput::make('email')
+                TextInput::make('email')
                     ->email()
+                    ->label(
+                        'E-mail:'
+                    )
                     ->required()
-                    ->maxLength(255),
+                    ->unique(ignoreRecord: true),
+                TextInput::make('password')
+                    ->password()
+                    ->label('Senha:')
+                    ->revealable()
+                    ->required(fn($record) => $record === null) // O campo de senha é obrigatório apenas na criação
+                    ->minLength(8)
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? Hash::make($state) : null) // Criptografa a senha
+                    ->visible(fn($record) => $record === null), // Só exibe o campo de senha ao criar
                 Forms\Components\Select::make('roles')
+                    ->label('Perfil do usuário:')
                     ->relationship('roles', 'name')
                     ->multiple()
                     ->preload()
-                    ->searchable(),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
-                Forms\Components\TextInput::make('password')
-                    ->password()
                     ->required()
-                    ->maxLength(255),
+                    ->searchable(),
+
             ]);
     }
 
@@ -48,21 +79,27 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
+                    ->label('Nome Completo')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
+                    ->label(
+                        'E-mail'
+                    )
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email_verified_at')
-                    ->dateTime()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->date('d/m/Y')
+                    ->label(
+                        'Criado em'
+                    )
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->since()
+                    ->label(
+                        'Atualizado à'
+                    )
+                    ->sortable(),
+
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
