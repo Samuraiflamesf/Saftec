@@ -22,16 +22,10 @@ return new class extends Migration
             $table->decimal('max_exposed_temperature', 5, 2)->nullable(); // Temperatura máxima exposta
             $table->decimal('min_exposed_temperature', 5, 2)->nullable(); // Temperatura mínimo exposta
             // Repeater
-            $table->json('medicament_name'); // nome do medicamento
-            $table->json('medicament_manufacturer'); // nome do fabricante
-            $table->json('medicament_batch'); // Lote
-            $table->json('medicament_date'); // Validade
-            $table->json('medicament_quantity'); // Quantidade de medicamento
+            $table->json('medicament')->nullable(); // nome do medicamento
             $table->string('order_number'); // Nº do pedido
             $table->string('distribution_number'); // Nº da distribuição
             $table->text('observations')->nullable(); // Observações
-            $table->string('filled_by'); // preenchido por
-            $table->string('role'); // Cargo / Função
             $table->text('file_monitor_temp')->nullable();
             // Keys automatically
             $table->string('protocol_number')->unique();
