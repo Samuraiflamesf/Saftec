@@ -49,7 +49,7 @@ class StabilityConsultationResource extends Resource
 {
     protected static ?string $model = StabilityConsultation::class;
 
-    protected static ?string $modelLabel = 'Temperatura';
+    protected static ?string $modelLabel = 'Excursão de Temperatura';
 
     public static function getNavigationBadge(): ?string
     {
@@ -64,7 +64,7 @@ class StabilityConsultationResource extends Resource
     }
     public static function getNavigationLabel(): string
     {
-        return 'Temperatura';
+        return 'Excursão de Temperatura';
     }
     public static function getNavigationGroup(): ?string
     {
