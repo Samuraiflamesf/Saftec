@@ -17,4 +17,5 @@ class EditStabilityConsultation extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
 }
