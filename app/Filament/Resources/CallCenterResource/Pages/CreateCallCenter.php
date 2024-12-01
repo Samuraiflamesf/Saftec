@@ -6,6 +6,7 @@ use Filament\Actions;
 use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\CallCenterResource;
+use Filament\Actions\Action;
 
 class CreateCallCenter extends CreateRecord
 {
@@ -17,5 +18,15 @@ class CreateCallCenter extends CreateRecord
         $data['user_create_id'] = Auth::id();
 
         return $data;
+    }
+    protected function getCreateFormAction(): Action
+    {
+        return parent::getCreateFormAction()
+            ->submit(null)
+            ->requiresConfirmation()
+            ->action(function () {
+                $this->closeActionModal();
+                $this->create();
+            });
     }
 }

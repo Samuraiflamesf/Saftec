@@ -2,23 +2,24 @@
 
 namespace App\Filament\Resources;
 
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Forms\Components\TextInput\Mask;
 use App\Models\StabilityConsultation;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Forms\Components\DateTimePicker;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\StabilityConsultationResource\Pages;
 use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
-use Carbon\Carbon;
 
 class StabilityConsultationResource extends Resource
 {
@@ -59,7 +60,9 @@ class StabilityConsultationResource extends Resource
                             Forms\Components\TextInput::make('cnpj')
                                 ->label('CNPJ:')
                                 ->required()
-                                ->maxLength(18),
+                                ->maxLength(18) // Define o comprimento máximo como 18 (com máscara incluída)
+                                ->rule('cnpj') // Aplica uma regra de validação customizada, se disponível
+                                ->helperText('Insira o CNPJ no formato: 00.000.000/0000-00'),
                             // Campo de verificação da excursão de temperatura
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
                                 ->label('Verificação da Excursão de temperatura')
@@ -67,32 +70,49 @@ class StabilityConsultationResource extends Resource
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true),
+
+
                             Forms\Components\DateTimePicker::make('last_verification_at')
                                 ->label('Última Verificação')
                                 ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
                                 ->required()
-                                ->seconds(false),
+                                ->seconds(false)
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    // Atualiza o campo estimado ao modificar `last_verification_at`
+                                    if ($state && $get('returned_to_storage_at')) {
+                                        $start = now()->parse($state);
+                                        $end = now()->parse($get('returned_to_storage_at'));
+                                        $difference = $start->lessThanOrEqualTo($end)
+                                            ? $start->diffInMinutes($end)
+                                            : 0; // Retorna 0 se a data inicial for posterior
+                                        $set('estimated_exposure_time', $difference);
+                                    }
+                                }),
 
-                            // Campo de retorno ao armazenamento
                             Forms\Components\DateTimePicker::make('returned_to_storage_at')
                                 ->label('Retorno ao Armazenamento')
                                 ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.')
                                 ->required()
                                 ->seconds(false)
-                                ->live(onBlur: true),
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    // Atualiza o campo estimado ao modificar `returned_to_storage_at`
+                                    if ($state && $get('last_verification_at')) {
+                                        $start = now()->parse($get('last_verification_at'));
+                                        $end = now()->parse($state);
+                                        $difference = $start->lessThanOrEqualTo($end)
+                                            ? $start->diffInMinutes($end)
+                                            : 0; // Retorna 0 se a data inicial for posterior
+                                        $set('estimated_exposure_time', $difference);
+                                    }
+                                }),
 
-                            // Campo para estimativa de tempo de exposição
                             Forms\Components\TextInput::make('estimated_exposure_time')
-                                ->label('Tempo Estimado de Exposição ')
+                                ->label('Tempo Estimado de Exposição')
                                 ->helperText('Tempo de exposição estimada à temperatura não recomendada em minutos.')
-                                ->default(
-                                    fn($get) =>
-                                    $get('last_verification_at') && $get('returned_to_storage_at')
-                                        ? Carbon::parse($get('last_verification_at'))
-                                        ->diffInMinutes(Carbon::parse($get('returned_to_storage_at')))
-                                        : null
-                                )
                                 ->disabled(),
+
 
                         ])
                         ->columns(2),
@@ -110,22 +130,26 @@ class StabilityConsultationResource extends Resource
                                 ->schema([
                                     Forms\Components\TextInput::make('medicament_name')
                                         ->label('Nome do Medicamento')
+                                        ->columns(2)
                                         ->required(),
                                     Forms\Components\TextInput::make('medicament_manufacturer')
+                                        ->columns(1)
                                         ->label('Fabricante do Medicamento')
                                         ->required(),
                                     Forms\Components\TextInput::make('medicament_batch')
                                         ->label('Lote do Medicamento')
                                         ->required(),
-                                    Forms\Components\TextInput::make('medicament_date')
+                                    Forms\Components\DatePicker::make('medicament_date')
                                         ->label('Data do Medicamento')
                                         ->required(),
                                     Forms\Components\TextInput::make('medicament_quantity')
                                         ->label('Quantidade do Medicamento')
+                                        ->numeric()
                                         ->required(),
                                 ])
                                 ->nullable() // Permite que o campo seja nulo
-                                ->columns(1),
+                                ->columnSpanFull()
+                                ->columns(3),
 
                         ])
                         ->columns(2),
@@ -144,10 +168,11 @@ class StabilityConsultationResource extends Resource
                                 ->label('Observações')
                                 ->columnSpanFull(),
                             Forms\Components\Textarea::make('file_monitor_temp')
-                                ->label('Monitoramento de Temperatura (Arquivo)')
+                                ->label('Monitoramento de Temperatura')
                                 ->columnSpanFull(),
                         ]),
-                ])->columnSpan('full'),
+                ])->columnSpan('full')
+                    ->columns(2),
             ]);
     }
 
