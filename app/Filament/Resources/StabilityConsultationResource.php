@@ -60,11 +60,6 @@ class StabilityConsultationResource extends Resource
                                 ->label('CNPJ:')
                                 ->required()
                                 ->maxLength(18),
-                            Forms\Components\DateTimePicker::make('last_verification_at')
-                                ->label('Última Verificação')
-                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
-                                ->required()
-                                ->seconds(false),
                             // Campo de verificação da excursão de temperatura
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
                                 ->label('Verificação da Excursão de temperatura')
@@ -72,6 +67,11 @@ class StabilityConsultationResource extends Resource
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true),
+                            Forms\Components\DateTimePicker::make('last_verification_at')
+                                ->label('Última Verificação')
+                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
+                                ->required()
+                                ->seconds(false),
 
                             // Campo de retorno ao armazenamento
                             Forms\Components\DateTimePicker::make('returned_to_storage_at')
@@ -85,9 +85,14 @@ class StabilityConsultationResource extends Resource
                             Forms\Components\TextInput::make('estimated_exposure_time')
                                 ->label('Tempo Estimado de Exposição ')
                                 ->helperText('Tempo de exposição estimada à temperatura não recomendada em minutos.')
-                                ->numeric(),
-
-
+                                ->default(
+                                    fn($get) =>
+                                    $get('last_verification_at') && $get('returned_to_storage_at')
+                                        ? Carbon::parse($get('last_verification_at'))
+                                        ->diffInMinutes(Carbon::parse($get('returned_to_storage_at')))
+                                        : null
+                                )
+                                ->disabled(),
 
                         ])
                         ->columns(2),
