@@ -13,6 +13,7 @@ class StabilityConsultation extends Model
 {
     use HasFactory, SoftDeletes;
     protected $fillable = [
+        'protocol_number',
         'institution_name',
         'cnpj',
         'last_verification_at',
@@ -21,24 +22,15 @@ class StabilityConsultation extends Model
         'returned_to_storage_at',
         'max_exposed_temperature',
         'min_exposed_temperature',
-        'product_description',
-        'manufacturer',
-        'batch',
-        'expiry_date',
-        'quantity',
+        'medicament',
         'order_number',
         'distribution_number',
         'observations',
-        'filled_by',
-        'role',
-        'record_date',
-        'protocol_number',
+        'file_monitor_temp',
         'user_create_id',
     ];
     protected $casts = [
-        'quantity' => 'array',
-        'product_description' => 'array',
-
+        'medicament' => 'array',
     ];
 
     use LogsActivity;
@@ -47,6 +39,7 @@ class StabilityConsultation extends Model
     {
         return LogOptions::defaults()
             ->logOnly([
+                'protocol_number',
                 'institution_name',
                 'cnpj',
                 'last_verification_at',
@@ -55,18 +48,11 @@ class StabilityConsultation extends Model
                 'returned_to_storage_at',
                 'max_exposed_temperature',
                 'min_exposed_temperature',
-                'product_description',
-                'manufacturer',
-                'batch',
-                'expiry_date',
-                'quantity',
+                'medicament',
                 'order_number',
                 'distribution_number',
                 'observations',
-                'filled_by',
-                'role',
-                'record_date',
-                'protocol_number',
+                'user_create_id',
             ]);
     }
     public function creator()

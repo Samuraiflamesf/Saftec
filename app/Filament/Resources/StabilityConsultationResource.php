@@ -9,17 +9,41 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Forms\Components\TextInput\Mask;
 use App\Models\StabilityConsultation;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\DateTimePicker;
+use Leandrocfe\FilamentPtbrFormFields\Document;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\StabilityConsultationResource\Pages;
 use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
+use App\Models\User;
+use Filament\Infolists;
+use App\Models\CallCenter;
+use Illuminate\Support\HtmlString;
+use Infolists\Components\FileEntry;
+use Infolists\Components\ListEntry;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Infolists\Components\Group;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Forms\Components\Wizard\Step;
+use Filament\Infolists\Components\Fieldset;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ImageEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\Section as InfolistSection;
+use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 class StabilityConsultationResource extends Resource
 {
@@ -57,20 +81,19 @@ class StabilityConsultationResource extends Resource
                                 ->label('Nome da Instituição:')
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\TextInput::make('cnpj')
+                            Document::make('cnpj')
                                 ->label('CNPJ:')
                                 ->required()
-                                ->maxLength(18) // Define o comprimento máximo como 18 (com máscara incluída)
-                                ->rule('cnpj') // Aplica uma regra de validação customizada, se disponível
-                                ->helperText('Insira o CNPJ no formato: 00.000.000/0000-00'),
+                                ->validation(false)  // Remover em produção
+                                ->cnpj('99999999/9999-99')
+                                ->helperText('Insira o CNPJ no formato: 00000000/0000-00'),
                             // Campo de verificação da excursão de temperatura
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
-                                ->label('Verificação da Excursão de temperatura')
+                                ->label('Excursão de temperatura')
                                 ->helperText('Data e horário da verificação da excursão de temperatura.')
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true),
-
 
                             Forms\Components\DateTimePicker::make('last_verification_at')
                                 ->label('Última Verificação')
@@ -112,8 +135,6 @@ class StabilityConsultationResource extends Resource
                                 ->label('Tempo Estimado de Exposição')
                                 ->helperText('Tempo de exposição estimada à temperatura não recomendada em minutos.')
                                 ->disabled(),
-
-
                         ])
                         ->columns(2),
 
@@ -125,15 +146,15 @@ class StabilityConsultationResource extends Resource
                             Forms\Components\TextInput::make('min_exposed_temperature')
                                 ->label('Temperatura Mínima Exposta')
                                 ->numeric(),
-                            Repeater::make('medicamentos')
+                            Repeater::make('medicament')
                                 ->label('Medicamentos')
                                 ->schema([
                                     Forms\Components\TextInput::make('medicament_name')
                                         ->label('Nome do Medicamento')
-                                        ->columns(2)
+                                        ->columnSpan(2)
                                         ->required(),
                                     Forms\Components\TextInput::make('medicament_manufacturer')
-                                        ->columns(1)
+                                        ->columnSpan(1)
                                         ->label('Fabricante do Medicamento')
                                         ->required(),
                                     Forms\Components\TextInput::make('medicament_batch')
@@ -164,12 +185,18 @@ class StabilityConsultationResource extends Resource
                                 ->label('Número de Distribuição')
                                 ->required()
                                 ->maxLength(255),
-                            Forms\Components\Textarea::make('observations')
+                            Forms\Components\RichEditor::make('observations')
                                 ->label('Observações')
                                 ->columnSpanFull(),
-                            Forms\Components\Textarea::make('file_monitor_temp')
+                            FileUpload::make('file_monitor_temp')
                                 ->label('Monitoramento de Temperatura')
-                                ->columnSpanFull(),
+                                ->columnSpanFull()
+                                ->acceptedFileTypes(['application/pdf'])
+                                ->maxSize(5128)
+                                ->downloadable()
+                                ->directory('stabilityConsultation_attachments')
+                                ->disk('public')
+                                ->visibility('private'),
                         ]),
                 ])->columnSpan('full')
                     ->columns(2),
@@ -180,50 +207,31 @@ class StabilityConsultationResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('protocol_number')
+                    ->label('Número do Protocolo')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('institution_name')
+                    ->label('Nome da Instituição')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('cnpj')
+                    ->label('CNPJ')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('last_verification_at')
-                    ->dateTime()
+                    ->label('Última Verificação')
+                    ->dateTime('d/m/Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('excursion_verification_at')
-                    ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('estimated_exposure_time')
-                    ->numeric()
+                    ->label('Verificação da Excursão')
+                    ->dateTime('d/m/Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('returned_to_storage_at')
-                    ->dateTime()
+                    ->label('Retorno ao Armazenamento')
+                    ->dateTime('d/m/Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('max_exposed_temperature')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('min_exposed_temperature')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('order_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('distribution_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('filled_by')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('role')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('protocol_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Data de Criação')
+                    ->dateTime('d/m/Y')
+                    ->sortable(),
             ])
             ->filters([
                 //
@@ -238,6 +246,121 @@ class StabilityConsultationResource extends Resource
                 ]),
             ]);
     }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            // Primeira seção: Detalhes principais
+            InfolistSection::make([
+                Fieldset::make('Detalhes Gerais')
+                    ->schema([
+                        TextEntry::make('protocol_number')
+                            ->label('Número do Protocolo:')
+                            ->size(TextEntry\TextEntrySize::Large)
+                            ->weight('bold')
+                            ->columnSpan(1)
+                            ->copyable()
+                            ->copyMessage('Copiado!'),
+                        TextEntry::make('institution_name')
+                            ->label('Nome da Instituição:')
+
+                            ->columnSpan(1)
+                            ->copyable()
+                            ->copyMessage('Copiado!'),
+                        TextEntry::make('cnpj')
+                            ->label('CNPJ:')
+                            ->columnSpan(1)
+                            ->copyable()
+                            ->copyMessage('Copiado!'),
+                        TextEntry::make('excursion_verification_at')
+                            ->label('Excursão de Temperatura')
+                            ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada')
+                            ->columnSpan(1),
+                        TextEntry::make('last_verification_at')
+                            ->label('Última Verificação')
+                            ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada')
+                            ->columnSpan(1),
+                        TextEntry::make('returned_to_storage_at')
+                            ->label('Retorno ao Armazenamento')
+                            ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada')
+                            ->columnSpan(1),
+                        TextEntry::make('estimated_exposure_time')
+                            ->label('Tempo Estimado de Exposição (min)')
+                            ->placeholder('Verifique datas nos campos: Última Verificação e Retorno ao Armazenamento')
+                            ->columnSpan(2),
+                    ])
+                    ->columns(3),
+
+                Fieldset::make('Informações de Exposição')
+                    ->schema([
+                        TextEntry::make('max_exposed_temperature')
+                            ->label('Temperatura Máxima Exposta (°C)')
+                            ->columnSpan(1),
+                        TextEntry::make('min_exposed_temperature')
+                            ->label('Temperatura Mínima Exposta (°C)')
+                            ->columnSpan(1),
+
+                        Infolists\Components\RepeatableEntry::make('medicament')
+                            ->label('Medicamentos')
+                            ->schema([
+                                TextEntry::make('medicament_name')
+                                    ->label('Nome do Medicamento')
+                                    ->size(TextEntry\TextEntrySize::Large)
+                                    ->weight('bold')
+                                    ->columnSpan(2),
+                                TextEntry::make('medicament_manufacturer')
+                                    ->label('Fabricante'),
+                                TextEntry::make('medicament_batch')
+                                    ->label('Lote'),
+                                TextEntry::make('medicament_date')
+                                    ->label('Data de Validade')
+                                    ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y') : 'Não Informada'),
+                                TextEntry::make('medicament_quantity')
+                                    ->label('Quantidade'),
+                            ])
+                            ->columns(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
+            ])->columnSpan(2),
+
+
+            // Segunda seção: Informações adicionais
+            InfolistSection::make([
+                Group::make([
+                    TextEntry::make('created_at')
+                        ->label('Criado em:')
+                        ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada'),
+                    TextEntry::make('updated_at')
+                        ->label('Atualizado em:')
+                        ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada'),
+                ])
+                    ->columns(2),
+                Group::make([
+                    TextEntry::make('creator.name')
+                        ->label('Responsável')
+                        ->color('primary'),
+                    TextEntry::make('creator.name_function')
+                        ->label('Cargo')
+                        ->color('info'),
+                ])
+                    ->columns(2),
+
+                TextEntry::make('file_monitor_temp')
+                    ->label('Monitoramento de Temperatura')
+                    ->columnSpanFull()
+                    ->placeholder('Sem anexos')
+                    ->listWithLineBreaks()->bulleted()
+                    ->formatStateUsing(function ($state) {
+                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                    })
+                    ->html(),
+            ])
+                ->columnSpan(1),
+        ])
+            ->columns(3); // Define o layout com três colunas
+    }
+
 
     public static function getRelations(): array
     {
