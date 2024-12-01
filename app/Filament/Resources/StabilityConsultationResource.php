@@ -130,11 +130,21 @@ class StabilityConsultationResource extends Resource
                                         $set('estimated_exposure_time', $difference);
                                     }
                                 }),
-
                             Forms\Components\TextInput::make('estimated_exposure_time')
                                 ->label('Tempo Estimado de Exposição')
                                 ->helperText('Tempo de exposição estimada à temperatura não recomendada em minutos.')
-                                ->disabled(),
+                                ->afterStateUpdated(function (callable $set, $state, $get) {
+                                    // Atualiza o campo com o valor calculado
+                                    if ($get('last_verification_at') && $get('returned_to_storage_at')) {
+                                        $start = now()->parse($get('last_verification_at'));
+                                        $end = now()->parse($get('returned_to_storage_at'));
+                                        $difference = $start->lessThanOrEqualTo($end)
+                                            ? $start->diffInMinutes($end)
+                                            : 0; // Retorna 0 se a data inicial for posterior
+                                        $set('estimated_exposure_time', $difference);  // Atualiza o valor do campo
+                                    }
+                                }),
+
                         ])
                         ->columns(2),
 
