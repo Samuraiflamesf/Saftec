@@ -1,0 +1,18 @@
+name: Package
+on: [push]
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: php-actions/composer@v6
+      with:
+        php_version: "8.2"
+        dev: no
+        args: --optimize-autoloader
+    - run: |
+        zip -r contactform.zip vendor *.php
+    - uses: actions/upload-artifact@v3
+      with:
+        name: contactform
+        path: contactform.zip
