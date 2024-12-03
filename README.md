@@ -65,6 +65,7 @@ Este é um sistema de gestão de unidades de saúde desenvolvido em Laravel, com
 
     ```bash
     php artisan migrate
+    php artisan storage:link
     ```
 
 8. Compile os assets do frontend:
