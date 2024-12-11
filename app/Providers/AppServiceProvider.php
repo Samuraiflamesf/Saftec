@@ -23,11 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Gate::policy(Activity::class, ActivityPolicy::class);
-
         // Coolify
         if ($this->app->environment('production')) {
             URL::forceRootUrl(config('app.url'));
         }
+
+        Gate::policy(Activity::class, ActivityPolicy::class);
+
     }
 }
