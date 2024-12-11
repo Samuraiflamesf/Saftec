@@ -57,8 +57,6 @@ class User extends Authenticatable
 
     public function canAccessFilament(): bool
     {
-        return ($this->hasVerifiedEmail() &&
-            (str_ends_with($this->email, '@gmail.com') || str_ends_with($this->email, '@saude.ba.gov.br')));
+        return str_ends_with($this->email, '@gmail.com') || str_ends_with($this->email, '@saude.ba.gov.br');
     }
-
 }
