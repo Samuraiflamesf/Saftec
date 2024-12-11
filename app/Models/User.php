@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Filament\Models\Contracts\FilamentUser;
 
 class User extends Authenticatable
 {
@@ -53,4 +54,11 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function canAccessFilament(): bool
+    {
+        return ($this->hasVerifiedEmail() &&
+            (str_ends_with($this->email, '@gmail.com') || str_ends_with($this->email, '@saude.ba.gov.br')));
+    }
+
 }
