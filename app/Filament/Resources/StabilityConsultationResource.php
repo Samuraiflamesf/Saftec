@@ -91,6 +91,7 @@ class StabilityConsultationResource extends Resource
                                 ->maxLength(255),
                             Document::make('cnpj')
                                 ->label('CNPJ:')
+                                ->rule('cnpj')
                                 ->required()
                                 ->validation(false)  // Remover em produção
                                 ->cnpj('99999999/9999-99')
@@ -271,11 +272,6 @@ class StabilityConsultationResource extends Resource
                         ->icon('heroicon-o-arrow-down-tray')
                         ->url(fn(StabilityConsultation $record) => route('pdf', $record))
                         ->openUrlInNewTab(),
-
-
-
-
-
                     DeleteAction::make()
                         ->successNotificationTitle('Deletado com sucesso.'),
                 ])->tooltip('Opções'),
@@ -309,7 +305,6 @@ class StabilityConsultationResource extends Resource
                             ->copyMessage('Copiado!'),
                         TextEntry::make('cnpj')
                             ->label('CNPJ:')
-                            ->rule('cnpj')
                             ->columnSpan(1)
                             ->copyable()
                             ->copyMessage('Copiado!'),
