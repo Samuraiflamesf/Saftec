@@ -60,10 +60,7 @@ class UserResource extends Resource
                     ->password()
                     ->label('Senha:')
                     ->revealable()
-                    ->required(fn($record) => $record === null) // O campo de senha é obrigatório apenas na criação
-                    ->minLength(8)
-                    ->dehydrateStateUsing(fn($state) => filled($state) ? Hash::make($state) : null) // Criptografa a senha
-                    ->visible(fn($record) => $record === null), // Só exibe o campo de senha ao criar
+                    ->minLength(8),
                 Forms\Components\Select::make('roles')
                     ->label('Perfil do usuário:')
                     ->relationship('roles', 'name')

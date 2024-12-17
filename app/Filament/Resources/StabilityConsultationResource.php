@@ -217,6 +217,36 @@ class StabilityConsultationResource extends Resource
                                 ->disk('public')
                                 ->visibility('private'),
                         ]),
+                    Wizard\Step::make('Informações do Laboratório')
+                        ->schema([
+                            Toggle::make('resp_laboratory')
+                                ->label('Houve resposta do Laboratório:')
+                                ->inline(false)
+                                ->offColor('success') // Cor quando desativado
+                                ->onColor('danger')  // Cor quando ativado
+                                ->offIcon('heroicon-m-lock-open')
+                                ->onIcon('heroicon-m-lock-closed')
+                                ->reactive() // Torna o campo reativo
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state) {
+                                        // Quando ativado, define "Dado Sigiloso"
+                                        $set('demandante', 'Sem resposta');
+                                    } else {
+                                        // Quando desativado, define um valor padrão
+                                        $set('demandante', null);
+                                    }
+                                }),
+                            Forms\Components\RichEditor::make('text_laboratory')
+                                ->label('Observações')
+                                ->columnSpanFull(),
+
+                            Forms\Components\RichEditor::make('text_unidade')
+                                ->label('Observações')
+                                ->columnSpanFull(),
+
+
+
+                        ]),
                 ])->columnSpan('full')
                     ->columns(2),
             ]);
