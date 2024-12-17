@@ -39,6 +39,7 @@ class AdminPanelProvider extends PanelProvider
                 'Administração',
                 'Configurações',
             ])
+            ->favicon(asset('favicon.ico'))
             ->plugins([
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
                 FilamentApexChartsPlugin::make(),
