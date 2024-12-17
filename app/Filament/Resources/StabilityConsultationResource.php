@@ -3,12 +3,13 @@
 namespace App\Filament\Resources;
 
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Blade;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Forms\Form;
-use Filament\Tables\Table;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Forms\Components\TextInput\Mask;
@@ -40,10 +41,17 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Infolists\Components\Fieldset;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Tables\Actions\ActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Table;
 use Filament\Infolists\Components\ImageEntry;
+use Filament\Tables\Actions\Action;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
+use Illuminate\Database\Eloquent\Model;
 
 class StabilityConsultationResource extends Resource
 {
@@ -83,6 +91,7 @@ class StabilityConsultationResource extends Resource
                                 ->maxLength(255),
                             Document::make('cnpj')
                                 ->label('CNPJ:')
+                                ->rule('cnpj')
                                 ->required()
                                 ->validation(false)  // Remover em produção
                                 ->cnpj('99999999/9999-99')
@@ -107,7 +116,7 @@ class StabilityConsultationResource extends Resource
                                         $start = now()->parse($state);
                                         $end = now()->parse($get('returned_to_storage_at'));
                                         $difference = $start->lessThanOrEqualTo($end)
-                                            ? $start->diffInMinutes($end)
+                                            ? $start->diffInHours($end)
                                             : 0; // Retorna 0 se a data inicial for posterior
                                         $set('estimated_exposure_time', $difference);
                                     }
@@ -125,21 +134,21 @@ class StabilityConsultationResource extends Resource
                                         $start = now()->parse($get('last_verification_at'));
                                         $end = now()->parse($state);
                                         $difference = $start->lessThanOrEqualTo($end)
-                                            ? $start->diffInMinutes($end)
+                                            ? $start->diffInHours($end)
                                             : 0; // Retorna 0 se a data inicial for posterior
                                         $set('estimated_exposure_time', $difference);
                                     }
                                 }),
                             Forms\Components\TextInput::make('estimated_exposure_time')
                                 ->label('Tempo Estimado de Exposição')
-                                ->helperText('Tempo de exposição estimada à temperatura não recomendada em minutos.')
+                                ->helperText('Tempo de exposição estimada à temperatura não recomendada em horas.')
                                 ->afterStateUpdated(function (callable $set, $state, $get) {
                                     // Atualiza o campo com o valor calculado
                                     if ($get('last_verification_at') && $get('returned_to_storage_at')) {
                                         $start = now()->parse($get('last_verification_at'));
                                         $end = now()->parse($get('returned_to_storage_at'));
                                         $difference = $start->lessThanOrEqualTo($end)
-                                            ? $start->diffInMinutes($end)
+                                            ? $start->diffInHours($end)
                                             : 0; // Retorna 0 se a data inicial for posterior
                                         $set('estimated_exposure_time', $difference);  // Atualiza o valor do campo
                                     }
@@ -171,7 +180,7 @@ class StabilityConsultationResource extends Resource
                                         ->label('Lote do Medicamento')
                                         ->required(),
                                     Forms\Components\DatePicker::make('medicament_date')
-                                        ->label('Data do Medicamento')
+                                        ->label('Data de Validade')
                                         ->required(),
                                     Forms\Components\TextInput::make('medicament_quantity')
                                         ->label('Quantidade do Medicamento')
@@ -226,8 +235,8 @@ class StabilityConsultationResource extends Resource
                 Tables\Columns\TextColumn::make('cnpj')
                     ->label('CNPJ')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('last_verification_at')
-                    ->label('Última Verificação')
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Data de Criação')
                     ->dateTime('d/m/Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('excursion_verification_at')
@@ -238,17 +247,34 @@ class StabilityConsultationResource extends Resource
                     ->label('Retorno ao Armazenamento')
                     ->dateTime('d/m/Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Data de Criação')
-                    ->dateTime('d/m/Y')
-                    ->sortable(),
+
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                ActionGroup::make([
+                    EditAction::make()
+                        ->color('warning'),
+                    ActivityLogTimelineTableAction::make('Logs')
+                        ->color('info')
+                        ->timelineIcons([
+                            'created' => 'heroicon-m-check-badge',
+                            'updated' => 'heroicon-m-pencil-square',
+                        ])
+                        ->timelineIconColors([
+                            'created' => 'info',
+                            'updated' => 'warning',
+                        ]),
+                    Action::make('pdf')
+                        ->label('PDF')
+                        ->color('success')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn(StabilityConsultation $record) => route('pdf', $record))
+                        ->openUrlInNewTab(),
+                    DeleteAction::make()
+                        ->successNotificationTitle('Deletado com sucesso.'),
+                ])->tooltip('Opções'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
