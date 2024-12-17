@@ -16,4 +16,8 @@ class ListStabilityConsultations extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+    protected function getTableRecordsPerPageSelectOptions(): array
+    {
+        return [25, 50, 100];
+    }
 }
