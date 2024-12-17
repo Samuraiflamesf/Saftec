@@ -31,4 +31,8 @@ class CreateStabilityConsultation extends CreateRecord
                 $this->create();
             });
     }
+    protected function getTableRecordsPerPageSelectOptions(): array
+    {
+        return [25, 50, 100];
+    }
 }
