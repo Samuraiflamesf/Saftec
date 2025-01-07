@@ -161,9 +161,13 @@ class StabilityConsultationResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('max_exposed_temperature')
                                 ->label('Temperatura Máxima Exposta')
+                                ->helperText('Insira a temperatura máxima exposta registrada.')
+                                ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
                                 ->numeric(),
                             Forms\Components\TextInput::make('min_exposed_temperature')
                                 ->label('Temperatura Mínima Exposta')
+                                ->helperText('Insira a temperatura mínima exposta registrada.')
+                                ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
                                 ->numeric(),
                             Repeater::make('medicament')
                                 ->label('Medicamentos')
