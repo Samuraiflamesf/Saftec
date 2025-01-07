@@ -223,32 +223,64 @@ class StabilityConsultationResource extends Resource
                         ]),
                     Wizard\Step::make('Informações do Laboratório')
                         ->schema([
+                            // Toggle que define a resposta do laboratório
                             Toggle::make('resp_laboratory')
                                 ->label('Houve resposta do Laboratório:')
                                 ->inline(false)
-                                ->offColor('success') // Cor quando desativado
-                                ->onColor('danger')  // Cor quando ativado
-                                ->offIcon('heroicon-m-lock-open')
-                                ->onIcon('heroicon-m-lock-closed')
+                                ->offColor('danger') // Cor quando desativado
+                                ->onColor('success')  // Cor quando ativado
+                                ->offIcon('heroicon-m-x-mark')
+                                ->onIcon('heroicon-m-check')
                                 ->reactive() // Torna o campo reativo
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     if ($state) {
-                                        // Quando ativado, define "Dado Sigiloso"
-                                        $set('demandante', 'Sem resposta');
                                     } else {
-                                        // Quando desativado, define um valor padrão
-                                        $set('demandante', null);
+                                        $set('text_laboratory', null); // Reseta o texto
+                                        $set('text_unidade', null); // Reseta o texto
                                     }
                                 }),
-                            Forms\Components\RichEditor::make('text_laboratory')
-                                ->label('Observações')
-                                ->columnSpanFull(),
 
-                            Forms\Components\RichEditor::make('text_unidade')
-                                ->label('Observações')
-                                ->columnSpanFull(),
+                            // Organiza os campos lado a lado
+                            Forms\Components\Grid::make(2) // Define 2 colunas
+                                ->schema([
+                                    // Campo para observações do laboratório
+                                    Forms\Components\RichEditor::make('text_laboratory')
+                                        ->label('Observações do Laboratório')
+                                        ->toolbarButtons([
+                                            'blockquote',
+                                            'bold',
+                                            'bulletList',
+                                            'h2',
+                                            'h3',
+                                            'italic',
+                                            'link',
+                                            'orderedList',
+                                            'underline',
+                                            'undo',
+                                        ])
+                                        ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
+                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->columnSpan(1), // Ocupa uma coluna
 
-
+                                    // Campo para observações da unidade
+                                    Forms\Components\RichEditor::make('text_unidade')
+                                        ->label('Observações da Unidade')
+                                        ->toolbarButtons([
+                                            'blockquote',
+                                            'bold',
+                                            'bulletList',
+                                            'h2',
+                                            'h3',
+                                            'italic',
+                                            'link',
+                                            'orderedList',
+                                            'underline',
+                                            'undo',
+                                        ])
+                                        ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
+                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->columnSpan(1), // Ocupa uma coluna
+                                ]),
 
                         ]),
                 ])->columnSpan('full')
@@ -392,6 +424,18 @@ class StabilityConsultationResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
+                Fieldset::make('Informações do Laboratório')
+                    ->schema([
+                        TextEntry::make('text_laboratory')
+                            ->label('Observações do Laboratório')
+                            ->placeholder('Sem resposta do laboratório.')
+                            ->columnSpan(1),
+                        TextEntry::make('text_unidade')
+                            ->label('Observações da Unidade')
+                            ->placeholder('Sem resposta do unidade.')
+                            ->columnSpan(1),
+                    ])
+                    ->columns(1),
             ])->columnSpan(2),
 
 
