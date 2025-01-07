@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -70,6 +71,15 @@ class StabilityConsultation extends Model
             } while (self::where('protocol_number', $protocolNumber)->exists());
 
             $model->protocol_number = $protocolNumber;
+        });
+    }
+    protected static function booted()
+    {
+        static::deleting(function (self $stabilityConsultation) {
+            // Verifica se há arquivos anexados no campo `file_monitor_temp`
+            if ($stabilityConsultation->file_monitor_temp) {
+                Storage::disk('public')->delete($stabilityConsultation->file_monitor_temp);
+            }
         });
     }
 }
