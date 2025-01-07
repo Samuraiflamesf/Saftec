@@ -34,7 +34,7 @@ Este é um sistema de gestão de unidades de saúde desenvolvido em Laravel, com
 2. Entre no diretório do projeto:
 
     ```bash
-    cd seu-projeto
+    cd SAFTEC
     ```
 
 3. Instale as dependências do PHP:
