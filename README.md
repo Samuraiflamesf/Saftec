@@ -28,7 +28,7 @@ Este é um sistema de gestão de unidades de saúde desenvolvido em Laravel, com
 1. Clone o repositório:
 
     ```bash
-    git clone https://github.com/Samuraiflamesf/SAFTEC_CMS.git
+    git clone https://github.com/Samuraiflamesf/SAFTEC.git
     ```
 
 2. Entre no diretório do projeto:
