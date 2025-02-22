@@ -88,7 +88,7 @@ class CardResource extends Resource
                         FileUpload::make('imagem')
                             ->label('Imagem do Card')
                             ->image()
-                            ->disk('public')  // Define o disco, podendo ser "public" ou outro disco configurado.
+                            ->disk('s3')  // Define o disco, podendo ser "public" ou outro disco configurado.
                             ->directory('cards')
                             ->required()
                             ->columnSpanFull(),
