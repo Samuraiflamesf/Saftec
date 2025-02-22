@@ -16,6 +16,7 @@ use Forms\Components\TextInput\Mask;
 use App\Models\StabilityConsultation;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
+use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
@@ -466,7 +467,22 @@ class StabilityConsultationResource extends Resource
                     ->placeholder('Sem anexos')
                     ->listWithLineBreaks()->bulleted()
                     ->formatStateUsing(function ($state) {
-                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                        if (!$state) {
+                            return 'Sem anexo do espelho';
+                        }
+
+                        $url = Storage::disk('s3')->url($state);
+
+                        return sprintf(
+                            '<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"
+                class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1
+                bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10
+                dark:text-custom-400 dark:ring-custom-400/30">
+                <a href="%s" target="_blank">%s</a>
+            </span>',
+                            $url,
+                            basename($state)
+                        );
                     })
                     ->html(),
             ])
