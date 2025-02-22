@@ -34,7 +34,7 @@ class UserResource extends Resource
     }
     public static function getNavigationGroup(): ?string
     {
-        return 'Cadastro Básico';
+        return 'Configurações';
     }
     public static function getNavigationIcon(): string
     {
