@@ -90,6 +90,7 @@ class CardResource extends Resource
                             ->image()
                             ->disk('s3')  // Define o disco, podendo ser "public" ou outro disco configurado.
                             ->directory('cards')
+                            ->visibility('publico')
                             ->required()
                             ->columnSpanFull(),
 
@@ -103,9 +104,7 @@ class CardResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('imagem')
-                    ->disk('s3')
-                    ->visibility('public'),
+                ImageColumn::make('imagem'),
                 TextColumn::make('nome')->searchable(),
                 TextColumn::make('descricao')->limit(50),
                 TextColumn::make('link'),

@@ -183,7 +183,7 @@ class CallCenterResource extends Resource
                                 ->downloadable()
                                 ->directory('callcenter_attachments')
                                 ->disk('s3')
-                                ->visibility('private'),
+                                ->visibility('publico'),
 
 
                             FileUpload::make('attachments')
@@ -191,6 +191,7 @@ class CallCenterResource extends Resource
                                 ->multiple()
                                 ->panelLayout('grid')
                                 ->downloadable()
+                                ->visibility('publico')
                                 ->disk('s3')  // Define o disco, podendo ser "public" ou outro disco configurado.
                                 ->directory('callcenter_attachments'),  // Define um diretório específico para os anexos.
 

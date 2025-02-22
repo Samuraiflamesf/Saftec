@@ -219,7 +219,7 @@ class StabilityConsultationResource extends Resource
                                 ->downloadable()
                                 ->directory('stabilityConsultation_attachments')
                                 ->disk('s3')
-                                ->visibility('private'),
+                                ->visibility('publico'),
                         ]),
                     Wizard\Step::make('Informações do Laboratório')
                         ->schema([
