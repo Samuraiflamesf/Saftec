@@ -78,7 +78,7 @@ class StabilityConsultation extends Model
         static::deleting(function (self $stabilityConsultation) {
             // Verifica se há arquivos anexados no campo `file_monitor_temp`
             if ($stabilityConsultation->file_monitor_temp) {
-                Storage::disk('public')->delete($stabilityConsultation->file_monitor_temp);
+                Storage::disk('s3')->delete($stabilityConsultation->file_monitor_temp);
             }
         });
     }

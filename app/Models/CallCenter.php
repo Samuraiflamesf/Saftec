@@ -73,15 +73,15 @@ class CallCenter extends Model
     {
         static::deleting(function ($callCenter) {
             // Excluir o arquivo do espelho, se existir
-            if ($callCenter->file_espelho && Storage::disk('public')->exists($callCenter->file_espelho)) {
-                Storage::disk('public')->delete($callCenter->file_espelho);
+            if ($callCenter->file_espelho && Storage::disk('s3')->exists($callCenter->file_espelho)) {
+                Storage::disk('s3')->delete($callCenter->file_espelho);
             }
 
             // Excluir anexos múltiplos, se existirem
             if ($callCenter->attachments) {
                 foreach ($callCenter->attachments as $attachment) {
-                    if (Storage::disk('public')->exists($attachment)) {
-                        Storage::disk('public')->delete($attachment);
+                    if (Storage::disk('s3')->exists($attachment)) {
+                        Storage::disk('s3')->delete($attachment);
                     }
                 }
             }

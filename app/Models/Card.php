@@ -17,7 +17,7 @@ class Card extends Model
 
         static::deleting(function ($card) {
             if ($card->imagem) {
-                Storage::disk('public')->delete($card->imagem);
+                Storage::disk('s3')->delete($card->imagem);
             }
         });
     }
