@@ -69,7 +69,7 @@
             <div
                 class="grid w-full grid-cols-1 gap-6 p-6 pt-3 pb-0 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 @foreach ($cards as $card)
-                    <a href="{{ Storage::disk('s3')->url($card->path) }}" target="_blank"
+                    <a href="{{ $card->link }}" target="_blank"
                         class="block overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 shadow-lg transition-transform transform hover:scale-105
                         w-[240px] h-[270px] flex flex-col relative">
 
