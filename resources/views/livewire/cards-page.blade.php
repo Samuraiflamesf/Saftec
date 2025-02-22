@@ -14,7 +14,7 @@
     <div class="flex flex-col flex-wrap py-6 pb-0 mb-0 sm:flex-row">
         <h1 class="mb-2 text-2xl font-medium text-gray-900 dark:text-white md:w-3/5 sm:w-2/5 title-font sm:mb-0">
             {{-- Explore alguns projetos que já desenvolvi: --}}
-            Explore os projetos da SAFTEC:
+            Central de Recursos SAFTEC:
         </h1>
         <div class="pl-0 text-base leading-relaxed md:w-2/5 sm:w-2/5 sm:pl-10 sm:justify-center">
             <div class="flex justify-center gap-4 mb-6 sm:justify-end">
