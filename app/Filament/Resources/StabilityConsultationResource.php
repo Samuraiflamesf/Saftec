@@ -218,7 +218,7 @@ class StabilityConsultationResource extends Resource
                                 ->maxSize(5128)
                                 ->downloadable()
                                 ->directory('stabilityConsultation_attachments')
-                                ->disk('public')
+                                ->disk('s3')
                                 ->visibility('private'),
                         ]),
                     Wizard\Step::make('Informações do Laboratório')
