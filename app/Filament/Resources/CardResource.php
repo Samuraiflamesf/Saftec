@@ -90,8 +90,8 @@ class CardResource extends Resource
                             ->image()
                             ->disk('s3')  // Define o disco, podendo ser "public" ou outro disco configurado.
                             ->directory('cards')
-                            ->visibility('publico')
                             ->required()
+                            ->deleteUploadedFileUsing(fn ($record) => Storage::disk('s3')->delete($record->imagem)); // Remove o arquivo antigo automaticamente
                             ->columnSpanFull(),
 
                     ]),
