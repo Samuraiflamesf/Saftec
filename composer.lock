@@ -119,16 +119,16 @@
         },
         {
             "name": "archtechx/money",
-            "version": "v0.5.1",
+            "version": "v0.5.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/archtechx/money.git",
-                "reference": "8a0eeae7c762c343f4bd1efac0e3a5575d3a03f5"
+                "reference": "b642e32a4be5e0b82a099eaf893db0c6f322cccf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/archtechx/money/zipball/8a0eeae7c762c343f4bd1efac0e3a5575d3a03f5",
-                "reference": "8a0eeae7c762c343f4bd1efac0e3a5575d3a03f5",
+                "url": "https://api.github.com/repos/archtechx/money/zipball/b642e32a4be5e0b82a099eaf893db0c6f322cccf",
+                "reference": "b642e32a4be5e0b82a099eaf893db0c6f322cccf",
                 "shasum": ""
             },
             "require": {
@@ -173,9 +173,9 @@
             "description": "A lightweight package for handling money math in PHP.",
             "support": {
                 "issues": "https://github.com/archtechx/money/issues",
-                "source": "https://github.com/archtechx/money/tree/v0.5.1"
+                "source": "https://github.com/archtechx/money/tree/v0.5.2"
             },
-            "time": "2024-03-29T01:12:37+00:00"
+            "time": "2024-12-29T02:10:59+00:00"
         },
         {
             "name": "barryvdh/laravel-dompdf",
