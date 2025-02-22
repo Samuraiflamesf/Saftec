@@ -16,6 +16,7 @@ use Forms\Components\TextInput\Mask;
 use App\Models\StabilityConsultation;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
+use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
 use Illuminate\Database\Eloquent\Builder;
@@ -161,9 +162,13 @@ class StabilityConsultationResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('max_exposed_temperature')
                                 ->label('Temperatura Máxima Exposta')
+                                ->helperText('Insira a temperatura máxima exposta registrada.')
+                                ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
                                 ->numeric(),
                             Forms\Components\TextInput::make('min_exposed_temperature')
                                 ->label('Temperatura Mínima Exposta')
+                                ->helperText('Insira a temperatura mínima exposta registrada.')
+                                ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
                                 ->numeric(),
                             Repeater::make('medicament')
                                 ->label('Medicamentos')
@@ -214,37 +219,69 @@ class StabilityConsultationResource extends Resource
                                 ->maxSize(5128)
                                 ->downloadable()
                                 ->directory('stabilityConsultation_attachments')
-                                ->disk('public')
-                                ->visibility('private'),
+                                ->disk('s3')
+                                ->visibility('publico'),
                         ]),
                     Wizard\Step::make('Informações do Laboratório')
                         ->schema([
+                            // Toggle que define a resposta do laboratório
                             Toggle::make('resp_laboratory')
                                 ->label('Houve resposta do Laboratório:')
                                 ->inline(false)
-                                ->offColor('success') // Cor quando desativado
-                                ->onColor('danger')  // Cor quando ativado
-                                ->offIcon('heroicon-m-lock-open')
-                                ->onIcon('heroicon-m-lock-closed')
+                                ->offColor('danger') // Cor quando desativado
+                                ->onColor('success')  // Cor quando ativado
+                                ->offIcon('heroicon-m-x-mark')
+                                ->onIcon('heroicon-m-check')
                                 ->reactive() // Torna o campo reativo
                                 ->afterStateUpdated(function ($state, callable $set) {
                                     if ($state) {
-                                        // Quando ativado, define "Dado Sigiloso"
-                                        $set('demandante', 'Sem resposta');
                                     } else {
-                                        // Quando desativado, define um valor padrão
-                                        $set('demandante', null);
+                                        $set('text_laboratory', null); // Reseta o texto
+                                        $set('text_unidade', null); // Reseta o texto
                                     }
                                 }),
-                            Forms\Components\RichEditor::make('text_laboratory')
-                                ->label('Observações')
-                                ->columnSpanFull(),
 
-                            Forms\Components\RichEditor::make('text_unidade')
-                                ->label('Observações')
-                                ->columnSpanFull(),
+                            // Organiza os campos lado a lado
+                            Forms\Components\Grid::make(2) // Define 2 colunas
+                                ->schema([
+                                    // Campo para observações do laboratório
+                                    Forms\Components\RichEditor::make('text_laboratory')
+                                        ->label('Observações do Laboratório')
+                                        ->toolbarButtons([
+                                            'blockquote',
+                                            'bold',
+                                            'bulletList',
+                                            'h2',
+                                            'h3',
+                                            'italic',
+                                            'link',
+                                            'orderedList',
+                                            'underline',
+                                            'undo',
+                                        ])
+                                        ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
+                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->columnSpan(1), // Ocupa uma coluna
 
-
+                                    // Campo para observações da unidade
+                                    Forms\Components\RichEditor::make('text_unidade')
+                                        ->label('Observações da Unidade')
+                                        ->toolbarButtons([
+                                            'blockquote',
+                                            'bold',
+                                            'bulletList',
+                                            'h2',
+                                            'h3',
+                                            'italic',
+                                            'link',
+                                            'orderedList',
+                                            'underline',
+                                            'undo',
+                                        ])
+                                        ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
+                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->columnSpan(1), // Ocupa uma coluna
+                                ]),
 
                         ]),
                 ])->columnSpan('full')
@@ -388,6 +425,18 @@ class StabilityConsultationResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
+                Fieldset::make('Informações do Laboratório')
+                    ->schema([
+                        TextEntry::make('text_laboratory')
+                            ->label('Observações do Laboratório')
+                            ->placeholder('Sem resposta do laboratório.')
+                            ->columnSpan(1),
+                        TextEntry::make('text_unidade')
+                            ->label('Observações da Unidade')
+                            ->placeholder('Sem resposta do unidade.')
+                            ->columnSpan(1),
+                    ])
+                    ->columns(1),
             ])->columnSpan(2),
 
 
@@ -418,7 +467,22 @@ class StabilityConsultationResource extends Resource
                     ->placeholder('Sem anexos')
                     ->listWithLineBreaks()->bulleted()
                     ->formatStateUsing(function ($state) {
-                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                        if (!$state) {
+                            return 'Sem anexo do espelho';
+                        }
+
+                        $url = Storage::disk('s3')->url($state);
+
+                        return sprintf(
+                            '<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"
+                class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1
+                bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10
+                dark:text-custom-400 dark:ring-custom-400/30">
+                <a href="%s" target="_blank">%s</a>
+            </span>',
+                            $url,
+                            basename($state)
+                        );
                     })
                     ->html(),
             ])

@@ -17,6 +17,7 @@
         "joshembling/image-optimizer": "^1.4",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
+        "league/flysystem-aws-s3-v3": "^3.29",
         "leandrocfe/filament-apex-charts": "^3.1",
         "leandrocfe/filament-ptbr-form-fields": "^3.0",
         "livewire/livewire": "^3.5",

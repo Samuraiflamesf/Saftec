@@ -19,6 +19,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Support\Facades\Storage;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\Group;
 use Filament\Forms\Components\DatePicker;
@@ -182,8 +183,7 @@ class CallCenterResource extends Resource
                                 ->maxSize(5128)
                                 ->downloadable()
                                 ->directory('callcenter_attachments')
-                                ->disk('public')
-                                ->visibility('private'),
+                                ->disk('s3'),
 
 
                             FileUpload::make('attachments')
@@ -191,9 +191,9 @@ class CallCenterResource extends Resource
                                 ->multiple()
                                 ->panelLayout('grid')
                                 ->downloadable()
-                                ->disk('public')  // Define o disco, podendo ser "public" ou outro disco configurado.
-                                ->directory('callcenter_attachments'),  // Define um diretório específico para os anexos.
-
+                                ->visibility('publico')
+                                ->disk('s3')
+                                ->directory('callcenter_attachments'),
 
                         ]),
 
@@ -362,7 +362,22 @@ class CallCenterResource extends Resource
                     ->placeholder('Sem anexo do espelho')
                     ->listWithLineBreaks()->bulleted()
                     ->formatStateUsing(function ($state) {
-                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                        if (!$state) {
+                            return 'Sem anexo do espelho';
+                        }
+
+                        $url = Storage::disk('s3')->url($state);
+
+                        return sprintf(
+                            '<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"
+                class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1
+                bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10
+                dark:text-custom-400 dark:ring-custom-400/30">
+                <a href="%s" target="_blank">%s</a>
+            </span>',
+                            $url,
+                            basename($state)
+                        );
                     })
                     ->html(),
 
@@ -371,7 +386,22 @@ class CallCenterResource extends Resource
                     ->placeholder('Sem anexos')
                     ->listWithLineBreaks()->bulleted()
                     ->formatStateUsing(function ($state) {
-                        return sprintf('<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"  class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1  bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10 dark:text-custom-400 dark:ring-custom-400/30"> <a href="%s"  target="_blank">%s</a></span>', '/storage/' . $state, basename($state));
+                        if (!$state) {
+                            return 'Sem anexos';
+                        }
+
+                        $url = Storage::disk('s3')->url($state);
+
+                        return sprintf(
+                            '<span style="--c-50:var(--primary-50);--c-400:var(--primary-400);--c-600:var(--primary-600);"
+                class="text-xs rounded-md mx-1 font-medium px-2 min-w-[theme(spacing.6)] py-1
+                bg-custom-50 text-custom-600 ring-custom-600/10 dark:bg-custom-400/10
+                dark:text-custom-400 dark:ring-custom-400/30">
+                <a href="%s" target="_blank">%s</a>
+            </span>',
+                            $url,
+                            basename($state)
+                        );
                     })
                     ->html(),
             ])
