@@ -103,7 +103,9 @@ class CardResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('imagem'),
+                ImageColumn::make('imagem')
+                    ->disk('s3')
+                    ->visibility('public'),
                 TextColumn::make('nome')->searchable(),
                 TextColumn::make('descricao')->limit(50),
                 TextColumn::make('link'),
