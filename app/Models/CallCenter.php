@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\User;
+use App\Models\Estabelecimento;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CallCenter extends Model
@@ -28,6 +31,7 @@ class CallCenter extends Model
         'date_resposta',
         'author_id',
         'user_create_id',
+        'estabelecimento_id'
     ];
     protected $casts = [
         'attachments' => 'array',
@@ -55,7 +59,7 @@ class CallCenter extends Model
                 'date_dispensacao',
                 'date_resposta',
                 'author_id',
-
+                'estabelecimento_id'
             ]);
     }
 
@@ -68,7 +72,10 @@ class CallCenter extends Model
     {
         return $this->belongsTo(User::class, 'user_create_id');
     }
-
+    public function estabelecimento(): BelongsTo
+    {
+        return $this->belongsTo(Estabelecimento::class);
+    }
     protected static function booted()
     {
         static::deleting(function ($callCenter) {
@@ -84,6 +91,16 @@ class CallCenter extends Model
                         Storage::disk('s3')->delete($attachment);
                     }
                 }
+            }
+        });
+    }
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $model->estabelecimento_id = auth()->user()->estabelecimento_id;
             }
         });
     }

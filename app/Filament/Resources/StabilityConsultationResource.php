@@ -56,14 +56,29 @@ use Illuminate\Database\Eloquent\Model;
 
 class StabilityConsultationResource extends Resource
 {
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->when(!auth()->user()->hasRole('super_admin'), function (Builder $query) {
+                $query->where('estabelecimento_id', auth()->user()->estabelecimento_id);
+            });
+    }
+
     protected static ?string $model = StabilityConsultation::class;
 
     protected static ?string $modelLabel = 'Excursão de Temperatura';
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $query = static::getModel()::query();
+
+        if (!auth()->user()->hasRole('super_admin')) {
+            $query->where('estabelecimento_id', auth()->user()->estabelecimento_id);
+        }
+
+        return $query->count();
     }
+
 
     protected static ?string $navigationIcon = 'heroicon-o-plus-circle';
 
@@ -294,7 +309,7 @@ class StabilityConsultationResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('protocol_number')
-                    ->label('Número do Protocolo')
+                    ->label('Protocolo')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('institution_name')
                     ->label('Nome da Instituição')
@@ -307,7 +322,7 @@ class StabilityConsultationResource extends Resource
                     ->dateTime('d/m/Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('excursion_verification_at')
-                    ->label('Verificação da Excursão')
+                    ->label('Data da Excursão')
                     ->dateTime('d/m/Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('returned_to_storage_at')

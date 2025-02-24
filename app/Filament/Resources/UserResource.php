@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\UserResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\UserResource\RelationManagers;
+use App\Models\Estabelecimento;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 class UserResource extends Resource
@@ -23,6 +24,8 @@ class UserResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $modelLabel = 'Usuário';
+
+    protected static ?int $navigationSort = 6;
 
     public static function getNavigationBadge(): ?string
     {
@@ -72,7 +75,42 @@ class UserResource extends Resource
                     ->required()
                     ->label('Cargo/Função:')
                     ->maxLength(255),
-
+                Select::make('estabelecimento_id')
+                    ->label('Estabelecimento')
+                    ->options(Estabelecimento::all()->pluck('nome', 'id'))
+                    ->searchable()
+                    ->required()
+                    ->relationship(name: 'estabelecimento', titleAttribute: 'nome')
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('cnes')
+                            ->label('CNES')
+                            ->numeric()
+                            ->required()
+                            ->maxLength(8),
+                        Forms\Components\TextInput::make('nome')
+                            ->label(
+                                'Nome'
+                            )
+                            ->required()
+                            ->maxLength(70),
+                        Select::make('macrorregiao')
+                            ->label(
+                                'Macrorregião'
+                            )
+                            ->searchable()
+                            ->required()
+                            ->options([
+                                'Centro-Leste' => 'Centro-Leste',
+                                'Centro-Norte' => 'Centro-Norte',
+                                'Extremo-Sul' => 'Extremo Sul',
+                                'Leste' => 'Leste',
+                                'Nordeste' => 'Nordeste',
+                                'Norte' => 'Norte',
+                                'Oeste' => 'Oeste',
+                                'Sudoeste' => 'Sudoeste',
+                                'Sul' => 'Sul',
+                            ])
+                    ]),
             ]);
     }
 
@@ -92,12 +130,6 @@ class UserResource extends Resource
                     ->date('d/m/Y')
                     ->label(
                         'Criado em'
-                    )
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->since()
-                    ->label(
-                        'Atualizado à'
                     )
                     ->sortable(),
 

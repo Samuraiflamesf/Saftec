@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\User;
 use Illuminate\Support\Str;
+use App\Models\Estabelecimento;
 use Spatie\Activitylog\LogOptions;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class StabilityConsultation extends Model
@@ -54,12 +57,14 @@ class StabilityConsultation extends Model
                 'distribution_number',
                 'observations',
                 'user_create_id',
+                'estabelecimento_id'
             ]);
     }
     public function creator()
     {
         return $this->belongsTo(User::class, 'user_create_id');
     }
+
     public static function boot()
     {
         parent::boot();
@@ -72,6 +77,15 @@ class StabilityConsultation extends Model
 
             $model->protocol_number = $protocolNumber;
         });
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $model->estabelecimento_id = auth()->user()->estabelecimento_id;
+            }
+        });
+    }
+    public function estabelecimento(): BelongsTo
+    {
+        return $this->belongsTo(Estabelecimento::class);
     }
     protected static function booted()
     {

@@ -42,14 +42,29 @@ use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 class CallCenterResource extends Resource
 {
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->when(!auth()->user()->hasRole('super_admin'), function (Builder $query) {
+                $query->where('estabelecimento_id', auth()->user()->estabelecimento_id);
+            });
+    }
+
     protected static ?string $model = CallCenter::class;
 
     protected static ?string $modelLabel = 'Ouvidoria';
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        $query = static::getModel()::query();
+
+        if (!auth()->user()->hasRole('super_admin')) {
+            $query->where('estabelecimento_id', auth()->user()->estabelecimento_id);
+        }
+
+        return $query->count();
     }
+
 
     protected static ?string $navigationIcon = 'heroicon-o-bookmark';
 
