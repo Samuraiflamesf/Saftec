@@ -5,18 +5,26 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use App\Models\User;
 use Filament\Tables;
+use App\Models\Cargo;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use App\Models\Estabelecimento;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Illuminate\Support\Facades\Hash;
 use Filament\Forms\Components\Select;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TrashedFilter;
 use App\Filament\Resources\UserResource\Pages;
+
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\UserResource\RelationManagers;
-use App\Models\Estabelecimento;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 class UserResource extends Resource
@@ -63,7 +71,12 @@ class UserResource extends Resource
                     ->password()
                     ->label('Senha:')
                     ->revealable()
-                    ->minLength(8),
+                    ->minLength(8)
+                    ->nullable()
+                    ->hidden(fn(string $operation) => in_array($operation, ['edit', 'view']))
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
+                    ->dehydrated(fn($state) => filled($state))
+                    ->required(fn(string $operation): bool => $operation === 'create'),
                 Forms\Components\Select::make('roles')
                     ->label('Perfil do usuário:')
                     ->relationship('roles', 'name')
@@ -71,16 +84,18 @@ class UserResource extends Resource
                     ->preload()
                     ->required()
                     ->searchable(),
-                TextInput::make('name_function')
-                    ->required()
-                    ->label('Cargo/Função:')
-                    ->maxLength(255),
+                Select::make('cargo_id')
+                    ->label('Cargo/Função')
+                    ->relationship('cargo', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->required(),
                 Select::make('estabelecimento_id')
                     ->label('Estabelecimento')
-                    ->options(Estabelecimento::all()->pluck('nome', 'id'))
+                    ->relationship(name: 'estabelecimento', titleAttribute: 'nome')
+                    ->preload()
                     ->searchable()
                     ->required()
-                    ->relationship(name: 'estabelecimento', titleAttribute: 'nome')
                     ->createOptionForm([
                         Forms\Components\TextInput::make('cnes')
                             ->label('CNES')
@@ -88,15 +103,11 @@ class UserResource extends Resource
                             ->required()
                             ->maxLength(8),
                         Forms\Components\TextInput::make('nome')
-                            ->label(
-                                'Nome'
-                            )
+                            ->label('Nome')
                             ->required()
                             ->maxLength(70),
                         Select::make('macrorregiao')
-                            ->label(
-                                'Macrorregião'
-                            )
+                            ->label('Macrorregião')
                             ->searchable()
                             ->required()
                             ->options([
@@ -109,8 +120,10 @@ class UserResource extends Resource
                                 'Oeste' => 'Oeste',
                                 'Sudoeste' => 'Sudoeste',
                                 'Sul' => 'Sul',
-                            ])
+                            ]),
                     ]),
+
+
             ]);
     }
 
@@ -122,9 +135,10 @@ class UserResource extends Resource
                     ->label('Nome Completo')
                     ->searchable(),
                 TextColumn::make('email')
-                    ->label(
-                        'E-mail'
-                    )
+                    ->label('E-mail')
+                    ->copyable()
+                    ->copyMessage('Email copiado')
+                    ->copyMessageDuration(1500)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->date('d/m/Y')
@@ -132,14 +146,11 @@ class UserResource extends Resource
                         'Criado em'
                     )
                     ->sortable(),
-
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
                 ActivityLogTimelineTableAction::make('Logs')
                     ->timelineIcons([
                         'created' => 'heroicon-m-check-badge',
@@ -149,6 +160,26 @@ class UserResource extends Resource
                         'created' => 'info',
                         'updated' => 'warning',
                     ]),
+                ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('resetPassword')
+                        ->label('Resetar Senha')
+                        ->icon('heroicon-o-key')
+                        ->color('danger')
+                        // Pede confirmação antes de resetar a senha
+                        ->requiresConfirmation()
+                        ->action(function (User $record) {
+                            // Atualiza a senha do usuário
+                            $record->update([
+                                'password' => Hash::make('12345678'),
+                            ]);
+                            // Exibe uma notificação de sucesso
+                            Notification::make()
+                                ->title('Senha redefinida com sucesso!')
+                                ->success()
+                                ->send();
+                        }),
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -172,7 +203,6 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
             'view' => Pages\ViewUser::route('/{record}'),
-
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }

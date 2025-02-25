@@ -28,15 +28,15 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'name_function',
-        'estabelecimento_id'
+        'estabelecimento_id',
+        'cargo_id'
     ];
 
     use LogsActivity;
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'password', 'name_function']);
+            ->logOnly(['name', 'email', 'password', 'estabelecimento_id', 'cargo_id']);
     }
 
     /**
@@ -64,5 +64,9 @@ class User extends Authenticatable implements FilamentUser
     public function estabelecimento(): BelongsTo
     {
         return $this->belongsTo(Estabelecimento::class);
+    }
+    public function cargo(): BelongsTo
+    {
+        return $this->belongsTo(Cargo::class);
     }
 }

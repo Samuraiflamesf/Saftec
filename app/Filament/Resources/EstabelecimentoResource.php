@@ -37,8 +37,9 @@ class EstabelecimentoResource extends Resource
     }
     public static function getNavigationGroup(): ?string
     {
-        return 'Administração';
+        return 'Configurações';
     }
+    protected static ?int $navigationSort = 5;
 
 
     public static function form(Form $form): Form

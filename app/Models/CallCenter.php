@@ -76,6 +76,10 @@ class CallCenter extends Model
     {
         return $this->belongsTo(Estabelecimento::class);
     }
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
+    }
     protected static function booted()
     {
         static::deleting(function ($callCenter) {
