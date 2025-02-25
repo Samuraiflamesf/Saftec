@@ -64,7 +64,12 @@ class UserResource extends Resource
                     ->password()
                     ->label('Senha:')
                     ->revealable()
-                    ->minLength(8),
+                    ->minLength(8)
+                    ->nullable()
+                    ->hidden(fn(string $operation) => in_array($operation, ['edit', 'view']))
+                    ->dehydrateStateUsing(fn($state) => filled($state) ? bcrypt($state) : null)
+                    ->dehydrated(fn($state) => filled($state))
+                    ->required(fn(string $operation): bool => $operation === 'create'),
                 Forms\Components\Select::make('roles')
                     ->label('Perfil do usuário:')
                     ->relationship('roles', 'name')
@@ -75,15 +80,15 @@ class UserResource extends Resource
                 Select::make('cargo_id')
                     ->label('Cargo/Função')
                     ->relationship('cargo', 'name')
-                    ->options(Cargo::all()->pluck('name', 'id'))
                     ->searchable()
+                    ->preload()
                     ->required(),
                 Select::make('estabelecimento_id')
                     ->label('Estabelecimento')
-                    ->options(Estabelecimento::all()->pluck('nome', 'id'))
+                    ->relationship(name: 'estabelecimento', titleAttribute: 'nome')
+                    ->preload()
                     ->searchable()
                     ->required()
-                    ->relationship(name: 'estabelecimento', titleAttribute: 'nome')
                     ->createOptionForm([
                         Forms\Components\TextInput::make('cnes')
                             ->label('CNES')
@@ -91,15 +96,11 @@ class UserResource extends Resource
                             ->required()
                             ->maxLength(8),
                         Forms\Components\TextInput::make('nome')
-                            ->label(
-                                'Nome'
-                            )
+                            ->label('Nome')
                             ->required()
                             ->maxLength(70),
                         Select::make('macrorregiao')
-                            ->label(
-                                'Macrorregião'
-                            )
+                            ->label('Macrorregião')
                             ->searchable()
                             ->required()
                             ->options([
@@ -112,8 +113,10 @@ class UserResource extends Resource
                                 'Oeste' => 'Oeste',
                                 'Sudoeste' => 'Sudoeste',
                                 'Sul' => 'Sul',
-                            ])
+                            ]),
                     ]),
+
+
             ]);
     }
 
@@ -175,7 +178,6 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
             'view' => Pages\ViewUser::route('/{record}'),
-
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
