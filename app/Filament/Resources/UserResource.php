@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\UserResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\UserResource\RelationManagers;
+use App\Models\Cargo;
 use App\Models\Estabelecimento;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
@@ -71,10 +72,12 @@ class UserResource extends Resource
                     ->preload()
                     ->required()
                     ->searchable(),
-                TextInput::make('name_function')
-                    ->required()
-                    ->label('Cargo/Função:')
-                    ->maxLength(255),
+                Select::make('cargo_id')
+                    ->label('Cargo/Função')
+                    ->relationship('cargo', 'name')
+                    ->options(Cargo::all()->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
                 Select::make('estabelecimento_id')
                     ->label('Estabelecimento')
                     ->options(Estabelecimento::all()->pluck('nome', 'id'))
