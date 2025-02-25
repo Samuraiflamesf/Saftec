@@ -325,16 +325,18 @@ class StabilityConsultationResource extends Resource
                     ->label('Data da Excursão')
                     ->dateTime('d/m/Y')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('returned_to_storage_at')
-                    ->label('Retorno ao Armazenamento')
-                    ->dateTime('d/m/Y')
-                    ->sortable(),
 
             ])
             ->filters([
                 //
             ])
             ->actions([
+                Action::make('pdf')
+                    ->label('PDF')
+                    ->color('success')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->url(fn(StabilityConsultation $record) => route('pdf', $record))
+                    ->openUrlInNewTab(),
                 ActionGroup::make([
                     EditAction::make()
                         ->color('warning'),
@@ -348,12 +350,6 @@ class StabilityConsultationResource extends Resource
                             'created' => 'info',
                             'updated' => 'warning',
                         ]),
-                    Action::make('pdf')
-                        ->label('PDF')
-                        ->color('success')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->url(fn(StabilityConsultation $record) => route('pdf', $record))
-                        ->openUrlInNewTab(),
                     DeleteAction::make()
                         ->successNotificationTitle('Deletado com sucesso.'),
                 ])->tooltip('Opções'),
@@ -470,7 +466,7 @@ class StabilityConsultationResource extends Resource
                     TextEntry::make('creator.name')
                         ->label('Responsável')
                         ->color('primary'),
-                    TextEntry::make('creator.name_function')
+                    TextEntry::make('creator.cargo.name')
                         ->label('Cargo')
                         ->color('info'),
                 ])

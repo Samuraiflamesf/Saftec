@@ -5,19 +5,26 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use App\Models\User;
 use Filament\Tables;
+use App\Models\Cargo;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
+use App\Models\Estabelecimento;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Illuminate\Support\Facades\Hash;
 use Filament\Forms\Components\Select;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\ActionGroup;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\TrashedFilter;
 use App\Filament\Resources\UserResource\Pages;
+
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\UserResource\RelationManagers;
-use App\Models\Cargo;
-use App\Models\Estabelecimento;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 class UserResource extends Resource
@@ -128,9 +135,10 @@ class UserResource extends Resource
                     ->label('Nome Completo')
                     ->searchable(),
                 TextColumn::make('email')
-                    ->label(
-                        'E-mail'
-                    )
+                    ->label('E-mail')
+                    ->copyable()
+                    ->copyMessage('Email copiado')
+                    ->copyMessageDuration(1500)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->date('d/m/Y')
@@ -138,14 +146,11 @@ class UserResource extends Resource
                         'Criado em'
                     )
                     ->sortable(),
-
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
                 ActivityLogTimelineTableAction::make('Logs')
                     ->timelineIcons([
                         'created' => 'heroicon-m-check-badge',
@@ -155,6 +160,26 @@ class UserResource extends Resource
                         'created' => 'info',
                         'updated' => 'warning',
                     ]),
+                ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('resetPassword')
+                        ->label('Resetar Senha')
+                        ->icon('heroicon-o-key')
+                        ->color('danger')
+                        // Pede confirmação antes de resetar a senha
+                        ->requiresConfirmation()
+                        ->action(function (User $record) {
+                            // Atualiza a senha do usuário
+                            $record->update([
+                                'password' => Hash::make('12345678'),
+                            ]);
+                            // Exibe uma notificação de sucesso
+                            Notification::make()
+                                ->title('Senha redefinida com sucesso!')
+                                ->success()
+                                ->send();
+                        }),
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

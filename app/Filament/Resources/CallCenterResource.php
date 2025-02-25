@@ -174,8 +174,14 @@ class CallCenterResource extends Resource
                         ->schema([
                             Select::make('author_id')
                                 ->label('Autor da Resposta:')
-                                ->options(User::all()->pluck('name', 'id'))
-                                ->searchable(),
+                                ->relationship(
+                                    'author',
+                                    'name',
+                                    modifyQueryUsing: fn($query) => $query->where('estabelecimento_id', auth()->user()->estabelecimento_id)
+                                )
+                                ->preload()
+                                ->searchable()
+                                ->required(),
                             DatePicker::make('date_resposta')
                                 ->label('Data da resposta:')
                                 ->minDate(now()->subYears(150))
