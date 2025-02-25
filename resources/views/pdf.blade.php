@@ -57,6 +57,18 @@
         table th {
             background-color: #f4f4f4;
         }
+
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            padding: 10px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #ccc;
+        }
     </style>
 </head>
 
@@ -119,8 +131,19 @@
         @endif
     </div>
 
-    <footer>
+    <footer class="footer">
         <p style="text-align: center;">Este é um documento gerado automaticamente.</p>
+        <p style="text-align: center;">Criado em: {{ $record->created_at }}
+            @if ($record->created_at != $record->updated_at)
+                Atualizado em:
+                {{ $record->updated_at }}
+            @endif
+        </p>
+        <p style="text-align: center;">Criado por: {{ $record->creator->name }} |
+            {{ $record->creator->cargo->name ?? 'Sem cargo' }}</p>
+
+        </p>
+
     </footer>
 </body>
 
