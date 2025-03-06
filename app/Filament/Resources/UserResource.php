@@ -175,7 +175,7 @@ class UserResource extends Resource
                             ]);
                             // Exibe uma notificação de sucesso
                             Notification::make()
-                                ->title('Senha redefinida com sucesso!')
+                                ->title('Sua senha foi redefinida para 12345678!')
                                 ->success()
                                 ->send();
                         }),

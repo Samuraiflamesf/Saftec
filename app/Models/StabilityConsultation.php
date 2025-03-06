@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class StabilityConsultation extends Model
 {
     use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'protocol_number',
         'institution_name',
@@ -83,10 +84,6 @@ class StabilityConsultation extends Model
             }
         });
     }
-    public function estabelecimento(): BelongsTo
-    {
-        return $this->belongsTo(Estabelecimento::class);
-    }
     protected static function booted()
     {
         static::deleting(function (self $stabilityConsultation) {
@@ -95,5 +92,13 @@ class StabilityConsultation extends Model
                 Storage::disk('s3')->delete($stabilityConsultation->file_monitor_temp);
             }
         });
+    }
+    // public function estabelecimento(): BelongsTo
+    // {
+    //     return $this->belongsTo(Estabelecimento::class);
+    // }
+    public function estabelecimento()
+    {
+        return $this->belongsTo(Estabelecimento::class, 'estabelecimento_id');
     }
 }

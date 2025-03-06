@@ -59,10 +59,12 @@ class StabilityConsultationResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
+            ->with('estabelecimento') // Carrega o relacionamento corretamente
             ->when(!auth()->user()->hasRole('super_admin'), function (Builder $query) {
                 $query->where('estabelecimento_id', auth()->user()->estabelecimento_id);
             });
     }
+
 
     protected static ?string $model = StabilityConsultation::class;
 
@@ -103,7 +105,10 @@ class StabilityConsultationResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('institution_name')
                                 ->label('Nome da Instituição:')
+                                ->default(fn() => StabilityConsultation::find(request()->route('record'))?->estabelecimento?->nome ?? 'Não informado')
+                                ->disabled() // Se não for para ser editável
                                 ->required()
+                                ->helperText('Nome da unidade')
                                 ->maxLength(255),
                             Document::make('cnpj')
                                 ->label('CNPJ:')
