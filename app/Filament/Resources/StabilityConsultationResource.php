@@ -28,6 +28,7 @@ use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
 use App\Models\User;
 use Filament\Infolists;
 use App\Models\CallCenter;
+use App\Models\Estabelecimento;
 use Illuminate\Support\HtmlString;
 use Infolists\Components\FileEntry;
 use Infolists\Components\ListEntry;
@@ -101,33 +102,29 @@ class StabilityConsultationResource extends Resource
         return $form
             ->schema([
                 Wizard::make([
-                    Wizard\Step::make('Detalhes Gerais')
+                    Wizard\Step::make('Identificação')
                         ->schema([
-                            Forms\Components\TextInput::make('institution_name')
+                            Forms\Components\Select::make('institution_name')
                                 ->label('Nome da Instituição:')
-                                ->default(fn() => StabilityConsultation::find(request()->route('record'))?->estabelecimento?->nome ?? 'Não informado')
-                                ->disabled() // Se não for para ser editável
-                                ->required()
                                 ->helperText('Nome da unidade')
-                                ->maxLength(255),
+                                ->options(Estabelecimento::all()->pluck('nome', 'id'))
+                                ->required()
+                                ->searchable(),
                             Document::make('cnpj')
                                 ->label('CNPJ:')
                                 ->rule('cnpj')
-                                ->required()
                                 ->validation(false)  // Remover em produção
                                 ->cnpj('99999999/9999-99')
                                 ->helperText('Insira o CNPJ no formato: 00000000/0000-00'),
                             // Campo de verificação da excursão de temperatura
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
-                                ->label('Excursão de temperatura')
-                                ->helperText('Data e horário da verificação da excursão de temperatura.')
+                                ->label('Data e horário da identificação da excursão de temperatura')
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true),
 
                             Forms\Components\DateTimePicker::make('last_verification_at')
-                                ->label('Última Verificação')
-                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
+                                ->label('Data e horário da última aferição da temperatura')
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true)
@@ -144,7 +141,7 @@ class StabilityConsultationResource extends Resource
                                 }),
 
                             Forms\Components\DateTimePicker::make('returned_to_storage_at')
-                                ->label('Retorno ao Armazenamento')
+                                ->label('Data e horário do retorno a temperatura preconizada')
                                 ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.')
                                 ->required()
                                 ->seconds(false)
@@ -181,57 +178,25 @@ class StabilityConsultationResource extends Resource
                     Wizard\Step::make('Dados de Exposição')
                         ->schema([
                             Forms\Components\TextInput::make('max_exposed_temperature')
-                                ->label('Temperatura Máxima Exposta')
+                                ->label('Temperatura Máxima Exposta (°C)')
                                 ->helperText('Insira a temperatura máxima exposta registrada.')
                                 ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
-                                ->numeric(),
+                                ->numeric()
+                                ->step(0.1)
+                                ->required(),
+
                             Forms\Components\TextInput::make('min_exposed_temperature')
-                                ->label('Temperatura Mínima Exposta')
+                                ->label('Temperatura Mínima Exposta (°C)')
                                 ->helperText('Insira a temperatura mínima exposta registrada.')
                                 ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
-                                ->numeric(),
-                            Repeater::make('medicament')
-                                ->label('Medicamentos')
-                                ->schema([
-                                    Forms\Components\TextInput::make('medicament_name')
-                                        ->label('Nome do Medicamento')
-                                        ->columnSpan(2)
-                                        ->required(),
-                                    Forms\Components\TextInput::make('medicament_manufacturer')
-                                        ->columnSpan(1)
-                                        ->label('Fabricante do Medicamento')
-                                        ->required(),
-                                    Forms\Components\TextInput::make('medicament_batch')
-                                        ->label('Lote do Medicamento')
-                                        ->required(),
-                                    Forms\Components\DatePicker::make('medicament_date')
-                                        ->label('Data de Validade')
-                                        ->required(),
-                                    Forms\Components\TextInput::make('medicament_quantity')
-                                        ->label('Quantidade do Medicamento')
-                                        ->numeric()
-                                        ->required(),
-                                ])
-                                ->nullable() // Permite que o campo seja nulo
-                                ->columnSpanFull()
-                                ->columns(3),
+                                ->numeric()
+                                ->step(0.1)
+                                ->required(),
 
-                        ])
-                        ->columns(2),
+                            Forms\Components\TextInput::make('local_exposure')
+                                ->label('Local de Armazenamento')
+                                ->required(),
 
-                    Wizard\Step::make('Informações do Pedido')
-                        ->schema([
-                            Forms\Components\TextInput::make('order_number')
-                                ->label('Número do Pedido')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('distribution_number')
-                                ->label('Número de Distribuição')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\RichEditor::make('observations')
-                                ->label('Observações')
-                                ->columnSpanFull(),
                             FileUpload::make('file_monitor_temp')
                                 ->label('Monitoramento de Temperatura')
                                 ->columnSpanFull()
@@ -241,8 +206,173 @@ class StabilityConsultationResource extends Resource
                                 ->directory('stabilityConsultation_attachments')
                                 ->disk('s3')
                                 ->visibility('publico'),
-                        ]),
-                    Wizard\Step::make('Informações do Laboratório')
+
+                            Repeater::make('medicament')
+                                ->label('Medicamentos')
+                                ->schema([
+                                    // Nome e Apresentação lado a lado
+                                    Forms\Components\TextInput::make('medicament_name')
+                                        ->label('Nome do Medicamento (Utilizar nome genérico)')
+                                        ->columnSpan(3)
+                                        ->required(),
+
+                                    Forms\Components\Select::make('medicament_unit')
+                                        ->label('Apresentação')
+                                        ->native(false)
+                                        ->searchable()
+                                        ->options([
+                                            'AMPOLA' => 'AMPOLA',
+                                            'CANETA INJETORA PREENCHIDA' => 'CANETA INJETORA PREENCHIDA',
+                                            'CÁPSULA' => 'CÁPSULA',
+                                            'COMPRIMIDO' => 'COMPRIMIDO',
+                                            'DRÁGEA' => 'DRÁGEA',
+                                            'ENVELOPE' => 'ENVELOPE',
+                                            'FRASCO' => 'FRASCO',
+                                            'FRASCO AMPOLA' => 'FRASCO AMPOLA',
+                                            'SACHÊ' => 'SACHÊ',
+                                            'SOLUÇÃO INJETÁVEL' => 'SOLUÇÃO INJETÁVEL',
+                                            'SOLUÇÃO ORAL' => 'SOLUÇÃO ORAL',
+                                        ])
+                                        ->required(),
+
+                                    Forms\Components\TextInput::make('medicament_manufacturer')
+                                        ->label('Fabricante')
+                                        ->columnSpan(2)
+                                        ->required(),
+
+                                    Forms\Components\DatePicker::make('medicament_date')
+                                        ->label('Data de Validade')
+                                        ->required(),
+
+                                    // Quantidade, Programa e Valor Unitário
+                                    Forms\Components\TextInput::make('medicament_quantity')
+                                        ->label('Quantidade')
+                                        ->numeric()
+                                        ->required(),
+
+                                    Forms\Components\Select::make('program_category')
+                                        ->label('Programa de Saúde')
+                                        ->native(false)
+                                        ->searchable()
+                                        ->options([
+                                            'AÇÃO JUDICIAL' => 'AÇÃO JUDICIAL',
+                                            'CEAF 1A - MS' => 'CEAF 1A - MS',
+                                            'CEAF 1B SESAB' => 'CEAF 1B SESAB',
+                                            'ENDEMIAS' => 'ENDEMIAS',
+                                            'MINISTÉRIO DA SAÚDE/JUDICIALIZAÇÃO' => 'MINISTÉRIO DA SAÚDE/JUDICIALIZAÇÃO',
+                                            'HEPATITES VIRAIS' => 'HEPATITES VIRAIS',
+                                            'HOSPITALAR' => 'HOSPITALAR',
+                                            'INSULINA DA ATENÇÃO BÁSICA' => 'INSULINA DA ATENÇÃO BÁSICA',
+                                            'ONCOLOGIA' => 'ONCOLOGIA',
+                                            'PROGRAMA DST/AIDS' => 'PROGRAMA DST/AIDS',
+                                            'PROTOCOLO ESTADUAL PALIVIZUMABE' => 'PROTOCOLO ESTADUAL PALIVIZUMABE',
+                                            'TUBERCULOSE' => 'TUBERCULOSE',
+                                        ])
+                                        ->columnSpan(2)
+                                        ->required(),
+
+                                    // Lote, Data de Validade e Fabricante
+                                    Forms\Components\TextInput::make('medicament_lote')
+                                        ->label('Lote')
+                                        ->required(),
+
+                                    Forms\Components\TextInput::make('unit_value')
+                                        ->label('Valor Unitário (R$)')
+                                        ->numeric()
+                                        // Permite valores com duas casas decimais
+                                        ->step(0.01)
+                                        ->required(),
+                                ])
+                                ->nullable() // Permite que o campo seja nulo
+                                ->columnSpanFull()
+                                ->columns(4),
+                        ])
+                        ->columns(3),
+
+                    Wizard\Step::make('Pedido/Distribuição')
+                        ->schema([
+                            Forms\Components\TextInput::make('order_number')
+                                ->label('Número do Pedido')
+                                ->disabled(fn($get) => $get('boolean_unit'))
+                                ->maxLength(15),
+                            Forms\Components\TextInput::make('distribution_number')
+                                ->label('Número de Distribuição')
+                                ->disabled(fn($get) => $get('boolean_unit'))
+                                ->maxLength(15),
+                            // Toggle que define a resposta do laboratório
+                            Toggle::make('boolean_unit')
+                                ->label('Excursão proveniente de um pedido:')
+                                ->inline(false)
+                                ->offColor('success') // Cor quando desativado
+                                ->onColor('danger')  // Cor quando ativado
+                                ->offIcon('heroicon-m-check')
+                                ->onIcon('heroicon-m-x-mark')
+                                ->reactive() // Torna o campo reativo
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state) {
+                                    } else {
+                                        $set('distribution_number', null); // Reseta o texto
+                                        $set('order_number', null); // Reseta o texto
+                                        $set('observations', null); // Reseta o texto
+                                    }
+                                }),
+                            Forms\Components\RichEditor::make('observations')
+                                ->label('Observações')
+                                ->columnSpanFull(),
+                        ])->columns(3),
+                    Wizard\Step::make('Analise Técnica')
+                        ->schema([
+                            Repeater::make('additional_info')
+                                ->label('Analise técnica para cada Medicamento')
+                                ->schema([
+                                    Forms\Components\TextInput::make('medicament_name')
+                                        ->label('Nome do Medicamento')
+                                        ->disabled() // Mantém o campo preenchido e bloqueado
+                                        ->dehydrated(false)
+                                        ->columnSpan(2),
+
+                                    Forms\Components\Select::make('boolean_bula')
+                                        ->label('Apresentação')
+                                        ->native(false)
+                                        ->searchable()
+                                        ->options([
+                                            'AMPOLA' => 'AMPOLA',
+                                            'CANETA INJETORA PREENCHIDA' => 'CANETA INJETORA PREENCHIDA',
+                                            'CÁPSULA' => 'CÁPSULA',
+                                            'COMPRIMIDO' => 'COMPRIMIDO',
+                                            'DRÁGEA' => 'DRÁGEA',
+                                            'ENVELOPE' => 'ENVELOPE',
+                                            'FRASCO' => 'FRASCO',
+                                            'FRASCO AMPOLA' => 'FRASCO AMPOLA',
+                                            'SACHÊ' => 'SACHÊ',
+                                            'SOLUÇÃO INJETÁVEL' => 'SOLUÇÃO INJETÁVEL',
+                                            'SOLUÇÃO ORAL' => 'SOLUÇÃO ORAL',
+                                        ])
+                                        ->required(),
+
+                                    Forms\Components\TextInput::make('stock_location')
+                                        ->label('Localização no Estoque')
+                                        ->required(),
+                                ])
+                                ->columnSpanFull()
+                                ->columns(3)
+                                ->defaultItems(0) // Define o mesmo número de itens do primeiro Repeater
+                                ->afterStateHydrated(function (Forms\Set $set, Forms\Get $get) {
+                                    // Preencher automaticamente os nomes dos medicamentos no segundo step
+                                    $medicaments = $get('medicament') ?? [];
+                                    $additionalInfo = [];
+
+                                    foreach ($medicaments as $medicament) {
+                                        $additionalInfo[] = [
+                                            'medicament_name' => $medicament['medicament_name'] ?? '',
+                                        ];
+                                    }
+
+                                    $set('additional_info', $additionalInfo);
+                                }),
+
+                        ])->columns(3),
+                    Wizard\Step::make('Análise Laboratorial')
                         ->schema([
                             // Toggle que define a resposta do laboratório
                             Toggle::make('resp_laboratory')
@@ -280,7 +410,7 @@ class StabilityConsultationResource extends Resource
                                             'undo',
                                         ])
                                         ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
-                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->disabled(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
                                         ->columnSpan(1), // Ocupa uma coluna
 
                                     // Campo para observações da unidade
@@ -299,7 +429,7 @@ class StabilityConsultationResource extends Resource
                                             'undo',
                                         ])
                                         ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
-                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->disabled(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
                                         ->columnSpan(1), // Ocupa uma coluna
                                 ]),
 
