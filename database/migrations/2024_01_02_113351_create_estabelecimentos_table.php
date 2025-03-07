@@ -13,10 +13,18 @@ return new class extends Migration
     {
         Schema::create('estabelecimentos', function (Blueprint $table) {
             $table->id();
-            $table->string('cnes');
-            $table->string('nome');
-            $table->string('macrorregiao');
+
+            // Identificadores do estabelecimento
+            $table->string('cnes', 7)->comment('Código CNES do estabelecimento de saúde');
+            $table->string('cnpj', 18)->nullable()->comment('CNPJ do estabelecimento, se aplicável');
+
+            // Informações do estabelecimento
+            $table->string('name')->comment('Nome do estabelecimento');
+            $table->string('macrorregiao')->comment('Macrorregião à qual o estabelecimento pertence');
+
+            // Campos de controle
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

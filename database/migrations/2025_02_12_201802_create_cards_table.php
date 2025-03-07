@@ -13,11 +13,17 @@ return new class extends Migration
     {
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
-            $table->string('nome');
-            $table->text('descricao');
-            $table->string('imagem');
-            $table->text('link');
-            $table->string('tipo')->default('dashboard'); 
+
+            // Informações principais
+            $table->string('name')->comment('Nome do card');
+            $table->text('description')->comment('Descrição detalhada do card');
+            $table->text('image_path')->comment('Caminho da imagem do card');
+            $table->text('url')->comment('URL associada ao card');
+
+            // Tipo do card (exemplo: dashboard, relatório, etc.)
+            $table->string('type')->default('dashboard')->comment('Tipo do card, ex: dashboard, relatório');
+
+            // Controle de registros
             $table->timestamps();
         });
     }

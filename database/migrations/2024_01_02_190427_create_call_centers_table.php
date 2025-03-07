@@ -9,31 +9,51 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('call_centers', function (Blueprint $table) {
             $table->id();
-            $table->string('protocolo');
-            $table->string('setor');
-            $table->string('demandante')->nullable();
-            $table->boolean('dado_sigiloso')->default(false);
-            $table->string('unidade')->nullable();
-            $table->string('resp_aquisicao')->nullable();
-            $table->string('date_dispensacao')->nullable();
-            $table->json('medicamentos')->nullable();
+
+            // Informações principais
+            $table->string('protocolo')->comment('Número do protocolo da solicitação');
+            $table->string('setor')->comment('Setor responsável pelo atendimento');
+            $table->string('demandante')->nullable()->comment('Nome do demandante');
+            $table->boolean('dado_sigiloso')->default(false)->comment('Indica se os dados da solicitação são sigilosos');
+            $table->string('unidade')->nullable()->comment('Unidade relacionada à solicitação');
+            $table->string('resp_aquisicao')->nullable()->comment('Responsável pela aquisição');
+
+            // Datas importantes
+            $table->date('dispensation_date')->nullable()->comment('Data da dispensação do medicamento');
+            $table->date('response_date')->nullable()->comment('Data da resposta à solicitação');
+
+            // Dados dos medicamentos
+            $table->json('medicamentos')->nullable()->comment('Lista de medicamentos envolvidos');
+
+            // Arquivos e anexos
+            $table->text('mirror_file')->nullable()->comment('Arquivo de espelho vinculado');
+            $table->json('attachments')->nullable()->comment('Lista de anexos associados');
+
+            // Relacionamentos
             $table->foreignId('author_id')
                 ->nullable()
                 ->constrained('users')
-                ->onDelete('set null');
-            $table->string('date_resposta')->nullable();
-            $table->longText('obs')->nullable();
-            $table->text('file_espelho')->nullable();
-            $table->json('attachments')->nullable();
-            $table->foreignId('user_create_id')
+                ->onDelete('set null')
+                ->comment('Usuário responsável pelo atendimento');
+
+            $table->foreignId('created_by')
                 ->nullable()
                 ->constrained('users')
                 ->onDelete('set null')
-                ->default(1);
+                ->default(1)
+                ->comment('Usuário que criou a solicitação');
+
+            $table->foreignId('estabelecimento_id')
+                ->nullable()
+                ->constrained()
+                ->cascadeOnDelete()
+                ->comment('Estabelecimento associado à solicitação');
+
+            // Controle de registros
             $table->softDeletes();
             $table->timestamps();
         });
