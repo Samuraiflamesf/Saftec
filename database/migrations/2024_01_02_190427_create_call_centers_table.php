@@ -21,6 +21,7 @@ return new class extends Migration
             $table->boolean('dado_sigiloso')->default(false)->comment('Indica se os dados da solicitação são sigilosos');
             $table->string('unidade')->nullable()->comment('Unidade relacionada à solicitação');
             $table->string('resp_aquisicao')->nullable()->comment('Responsável pela aquisição');
+            $table->longText('observation')->nullable()->comment('Observação');
 
             // Datas importantes
             $table->date('dispensation_date')->nullable()->comment('Data da dispensação do medicamento');

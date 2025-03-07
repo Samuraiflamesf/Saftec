@@ -25,6 +25,7 @@ class CallCenter extends Model
         'dispensation_date',
         'response_date',
         'medicamentos',
+        'observation',
         'mirror_file',
         'attachments',
         'author_id',
@@ -54,9 +55,9 @@ class CallCenter extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-    public function estabelecimento(): BelongsTo
+    public function estabelecimento()
     {
-        return $this->belongsTo(Estabelecimento::class);
+        return $this->belongsTo(Estabelecimento::class, 'estabelecimento_id');
     }
     protected static function booted()
     {
