@@ -12,10 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('stability_consultations', function (Blueprint $table) {
-            $table->boolean('resp_laboratory')->default(false);
-            $table->text('text_laboratory')->nullable();
-            $table->text('text_unidade')->nullable();
-
+            $table->text('local_exposure')->nullable();
+            $table->boolean('boolean_unit')->default(false);
         });
     }
 
@@ -25,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('stability_consultations', function (Blueprint $table) {
-            //
+            $table->dropColumn(['local_exposure', 'boolean_unit']);
         });
     }
 };

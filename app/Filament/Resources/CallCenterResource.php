@@ -99,7 +99,7 @@ class CallCenterResource extends Resource
                             // Setor
                             Select::make('setor')
                                 ->options([
-                                    'Diretoria' => 'Diretoria',
+                                    'DASF' => 'DASF',
                                     'CAJ' => 'CAJ',
                                     'COAFE' => 'COAFE',
                                     'CAFAB' => 'CAFAB',
