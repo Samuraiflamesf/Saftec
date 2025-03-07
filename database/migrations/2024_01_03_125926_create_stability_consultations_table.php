@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('stability_consultations', function (Blueprint $table) {
+            // Identificadores únicos e relacionamentos
             $table->id();
+            $table->string('protocol_number')->unique()->comment('Número de protocolo único para a consulta');
 
             // Informações da Instituição
             $table->string('institution_name')->comment('Nome da instituição responsável');
@@ -33,16 +35,14 @@ return new class extends Migration
             $table->json('medications')->nullable()->comment('Lista de medicamentos envolvidos na excursão');
 
             // Dados administrativos
-            $table->string('order_number')->comment('Número do pedido');
-            $table->string('distribution_number')->comment('Número da distribuição');
+            $table->string('order_number')->nullable()->comment('Número do pedido');
+            $table->string('distribution_number')->nullable()->comment('Número da distribuição');
             $table->text('observations')->nullable()->comment('Observações adicionais');
             $table->string('file_monitor_temp')->nullable()->comment('Caminho do arquivo de monitoramento de temperatura');
 
             // Indicador booleano adicional
             $table->boolean('boolean_unit')->default(false)->comment('Indicador booleano para unidade');
 
-            // Identificadores únicos e relacionamentos
-            $table->string('protocol_number')->unique()->comment('Número de protocolo único para a consulta');
 
             // Chave estrangeira do usuário que criou o registro
             $table->foreignId('created_by')

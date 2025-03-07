@@ -15,7 +15,8 @@ class Estabelecimento extends Model
 
     protected $fillable = [
         'cnes',
-        'nome',
+        'cnpj',
+        'name',
         'macrorregiao',
     ];
 

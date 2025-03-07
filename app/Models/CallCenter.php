@@ -17,20 +17,19 @@ class CallCenter extends Model
 
     protected $fillable = [
         'protocolo',
-        'demandante',
         'setor',
-        'unidade',
-        'medicamentos',
-        'resp_aquisicao',
+        'demandante',
         'dado_sigiloso',
-        'file_espelho',
+        'unidade',
+        'resp_aquisicao',
+        'dispensation_date',
+        'response_date',
+        'medicamentos',
+        'mirror_file',
         'attachments',
-        'obs',
-        'date_dispensacao',
-        'date_resposta',
         'author_id',
-        'user_create_id',
-        'estabelecimento_id'
+        'created_by',
+        'estabelecimento_id',
     ];
     protected $casts = [
         'attachments' => 'array',
@@ -43,47 +42,28 @@ class CallCenter extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly([
-                'protocolo',
-                'demandante',
-                'setor',
-                'unidade',
-                'medicamentos',
-                'resp_aquisicao',
-                'dado_sigiloso',
-                'file_espelho',
-                'attachments',
-                'obs',
-                'date_dispensacao',
-                'date_resposta',
-                'author_id',
-                'estabelecimento_id'
-            ]);
+            ->logOnly($this->fillable);
     }
 
     // Referencias
-    public function user()
+    public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
     }
     public function creator()
     {
-        return $this->belongsTo(User::class, 'user_create_id');
+        return $this->belongsTo(User::class, 'created_by');
     }
     public function estabelecimento(): BelongsTo
     {
         return $this->belongsTo(Estabelecimento::class);
     }
-    public function author(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'author_id');
-    }
     protected static function booted()
     {
         static::deleting(function ($callCenter) {
             // Excluir o arquivo do espelho, se existir
-            if ($callCenter->file_espelho && Storage::disk('s3')->exists($callCenter->file_espelho)) {
-                Storage::disk('s3')->delete($callCenter->file_espelho);
+            if ($callCenter->mirror_file && Storage::disk('s3')->exists($callCenter->mirror_file)) {
+                Storage::disk('s3')->delete($callCenter->mirror_file);
             }
 
             // Excluir anexos múltiplos, se existirem

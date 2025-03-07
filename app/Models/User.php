@@ -28,8 +28,8 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'cargo_id',
         'estabelecimento_id',
-        'cargo_id'
     ];
 
     use LogsActivity;

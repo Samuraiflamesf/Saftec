@@ -10,7 +10,13 @@ class Card extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nome', 'descricao', 'imagem', 'link', 'tipo'];
+    protected $fillable = [
+        'name',
+        'description',
+        'image_path',
+        'url',
+        'type',
+    ];
 
     protected static function boot()
     {
@@ -18,16 +24,16 @@ class Card extends Model
 
         // Remover a imagem ao deletar o registro
         static::deleting(function ($card) {
-            if ($card->imagem) {
-                Storage::disk('s3')->delete($card->imagem);
+            if ($card->image_path) {
+                Storage::disk('s3')->delete($card->image_path);
             }
         });
 
         // Remover a imagem antiga ao editar/trocar
         static::updating(function ($card) {
-            // Verifica se o campo "imagem" foi alterado
-            if ($card->isDirty('imagem')) {
-                $originalImage = $card->getOriginal('imagem');
+            // Verifica se o campo "image_path" foi alterado
+            if ($card->isDirty('image_path')) {
+                $originalImage = $card->getOriginal('image_path');
 
                 // Deleta a imagem antiga do MinIO (S3)
                 if ($originalImage) {
