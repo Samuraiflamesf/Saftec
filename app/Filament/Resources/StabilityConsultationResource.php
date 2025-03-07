@@ -3,56 +3,66 @@
 namespace App\Filament\Resources;
 
 use Carbon\Carbon;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Blade;
 use Filament\Forms;
+use App\Models\User;
 use Filament\Tables;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Infolists;
 use Filament\Forms\Form;
+use App\Models\CallCenter;
+use Filament\Tables\Table;
+use App\Models\Estabelecimento;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
-use Forms\Components\TextInput\Mask;
-use App\Models\StabilityConsultation;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\Repeater;
-use Illuminate\Support\Facades\Storage;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\FileUpload;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\DateTimePicker;
-use Leandrocfe\FilamentPtbrFormFields\Document;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\StabilityConsultationResource\Pages;
-use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
-use App\Models\User;
-use Filament\Infolists;
-use App\Models\CallCenter;
 use Illuminate\Support\HtmlString;
+use Filament\Forms\Components\Grid;
+use Filament\Tables\Actions\Action;
 use Infolists\Components\FileEntry;
 use Infolists\Components\ListEntry;
+use Forms\Components\TextInput\Mask;
+use App\Models\StabilityConsultation;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Wizard;
+use Filament\Support\Enums\Alignment;
+use Illuminate\Support\Facades\Blade;
+use Filament\Forms\Components\Repeater;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\Group;
+use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Infolists\Components\Fieldset;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Tables\Actions\ActionGroup;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
-use Filament\Tables\Table;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Infolists\Components\ImageEntry;
-use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Leandrocfe\FilamentPtbrFormFields\Document;
 use Filament\Infolists\Components\RepeatableEntry;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Components\TextEntry\TextEntrySize;
 use Filament\Infolists\Components\Section as InfolistSection;
+use App\Filament\Resources\StabilityConsultationResource\Pages;
 use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
-use Illuminate\Database\Eloquent\Model;
+use App\Filament\Resources\StabilityConsultationResource\RelationManagers;
+use App\Filament\Resources\StabilityConsultationResource\Pages\EditStabilityConsultation;
+use App\Filament\Resources\StabilityConsultationResource\Pages\ViewStabilityConsultation;
+use App\Filament\Resources\StabilityConsultationResource\Pages\ListStabilityConsultations;
+use App\Filament\Resources\StabilityConsultationResource\Pages\CreateStabilityConsultation;
 
 class StabilityConsultationResource extends Resource
 {
@@ -101,33 +111,23 @@ class StabilityConsultationResource extends Resource
         return $form
             ->schema([
                 Wizard::make([
-                    Wizard\Step::make('Detalhes Gerais')
+                    Wizard\Step::make('Identificação')
                         ->schema([
-                            Forms\Components\TextInput::make('institution_name')
-                                ->label('Nome da Instituição:')
-                                ->default(fn() => StabilityConsultation::find(request()->route('record'))?->estabelecimento?->nome ?? 'Não informado')
-                                ->disabled() // Se não for para ser editável
+                            Forms\Components\Select::make('institution_name')
+                                ->label('Nome da unidade:')
+                                ->helperText('Estabelecimento onde ocorreu excursão')
+                                ->options(Estabelecimento::all()->pluck('nome', 'id'))
                                 ->required()
-                                ->helperText('Nome da unidade')
-                                ->maxLength(255),
+                                ->searchable(),
                             Document::make('cnpj')
                                 ->label('CNPJ:')
                                 ->rule('cnpj')
-                                ->required()
                                 ->validation(false)  // Remover em produção
                                 ->cnpj('99999999/9999-99')
                                 ->helperText('Insira o CNPJ no formato: 00000000/0000-00'),
                             // Campo de verificação da excursão de temperatura
                             Forms\Components\DateTimePicker::make('excursion_verification_at')
-                                ->label('Excursão de temperatura')
-                                ->helperText('Data e horário da verificação da excursão de temperatura.')
-                                ->required()
-                                ->seconds(false)
-                                ->live(onBlur: true),
-
-                            Forms\Components\DateTimePicker::make('last_verification_at')
-                                ->label('Última Verificação')
-                                ->helperText('Data e horário da última verificação antes da excursão de temperatura.')
+                                ->label('Data e horário da identificação da excursão de temperatura')
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true)
@@ -143,16 +143,22 @@ class StabilityConsultationResource extends Resource
                                     }
                                 }),
 
+                            Forms\Components\DateTimePicker::make('last_verification_at')
+                                ->label('Data e horário da última aferição da temperatura')
+                                ->required()
+                                ->seconds(false)
+                                ->live(onBlur: true),
+
                             Forms\Components\DateTimePicker::make('returned_to_storage_at')
-                                ->label('Retorno ao Armazenamento')
+                                ->label('Data e horário do retorno a temperatura preconizada')
                                 ->helperText('Data e horário em que o item retornou à condição preconizada de armazenamento.')
                                 ->required()
                                 ->seconds(false)
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function (callable $set, $state, $get) {
                                     // Atualiza o campo estimado ao modificar `returned_to_storage_at`
-                                    if ($state && $get('last_verification_at')) {
-                                        $start = now()->parse($get('last_verification_at'));
+                                    if ($state && $get('excursion_verification_at')) {
+                                        $start = now()->parse($get('excursion_verification_at'));
                                         $end = now()->parse($state);
                                         $difference = $start->lessThanOrEqualTo($end)
                                             ? $start->diffInHours($end)
@@ -181,57 +187,25 @@ class StabilityConsultationResource extends Resource
                     Wizard\Step::make('Dados de Exposição')
                         ->schema([
                             Forms\Components\TextInput::make('max_exposed_temperature')
-                                ->label('Temperatura Máxima Exposta')
+                                ->label('Temperatura Máxima Exposta (°C)')
                                 ->helperText('Insira a temperatura máxima exposta registrada.')
                                 ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
-                                ->numeric(),
+                                ->numeric()
+                                ->step(0.1)
+                                ->required(),
+
                             Forms\Components\TextInput::make('min_exposed_temperature')
-                                ->label('Temperatura Mínima Exposta')
+                                ->label('Temperatura Mínima Exposta (°C)')
                                 ->helperText('Insira a temperatura mínima exposta registrada.')
                                 ->rule('between:-50,100', 'A temperatura deve estar entre -50°C e 100°C.')
-                                ->numeric(),
-                            Repeater::make('medicament')
-                                ->label('Medicamentos')
-                                ->schema([
-                                    Forms\Components\TextInput::make('medicament_name')
-                                        ->label('Nome do Medicamento')
-                                        ->columnSpan(2)
-                                        ->required(),
-                                    Forms\Components\TextInput::make('medicament_manufacturer')
-                                        ->columnSpan(1)
-                                        ->label('Fabricante do Medicamento')
-                                        ->required(),
-                                    Forms\Components\TextInput::make('medicament_batch')
-                                        ->label('Lote do Medicamento')
-                                        ->required(),
-                                    Forms\Components\DatePicker::make('medicament_date')
-                                        ->label('Data de Validade')
-                                        ->required(),
-                                    Forms\Components\TextInput::make('medicament_quantity')
-                                        ->label('Quantidade do Medicamento')
-                                        ->numeric()
-                                        ->required(),
-                                ])
-                                ->nullable() // Permite que o campo seja nulo
-                                ->columnSpanFull()
-                                ->columns(3),
+                                ->numeric()
+                                ->step(0.1)
+                                ->required(),
 
-                        ])
-                        ->columns(2),
+                            Forms\Components\TextInput::make('local_exposure')
+                                ->label('Local de Armazenamento')
+                                ->required(),
 
-                    Wizard\Step::make('Informações do Pedido')
-                        ->schema([
-                            Forms\Components\TextInput::make('order_number')
-                                ->label('Número do Pedido')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\TextInput::make('distribution_number')
-                                ->label('Número de Distribuição')
-                                ->required()
-                                ->maxLength(255),
-                            Forms\Components\RichEditor::make('observations')
-                                ->label('Observações')
-                                ->columnSpanFull(),
                             FileUpload::make('file_monitor_temp')
                                 ->label('Monitoramento de Temperatura')
                                 ->columnSpanFull()
@@ -241,8 +215,144 @@ class StabilityConsultationResource extends Resource
                                 ->directory('stabilityConsultation_attachments')
                                 ->disk('s3')
                                 ->visibility('publico'),
+
+                            Repeater::make('medicament')
+                                ->label('Medicamentos')
+                                ->collapsible()
+                                ->itemLabel(fn(array $state): ?string => $state['medicament_name'] ?? null)
+                                ->schema([
+                                    TextInput::make('medicament_name')
+                                        ->label('Nome do Medicamento')
+                                        ->columnSpan(3)
+                                        ->required(),
+
+                                    Select::make('medicament_unit')
+                                        ->label('Apresentação')
+                                        ->options([
+                                            'AMPOLA' => 'AMPOLA',
+                                            'CÁPSULA' => 'CÁPSULA',
+                                            'COMPRIMIDO' => 'COMPRIMIDO',
+                                        ])
+                                        ->required(),
+
+                                    TextInput::make('medicament_manufacturer')
+                                        ->label('Fabricante')
+                                        ->columnSpan(2)
+                                        ->required(),
+
+                                    DatePicker::make('medicament_date')
+                                        ->label('Data de Validade')
+                                        ->required(),
+
+                                    TextInput::make('medicament_quantity')
+                                        ->label('Quantidade')
+                                        ->numeric()
+                                        ->required(),
+
+                                    Select::make('program_category')
+                                        ->label('Programa de Saúde')
+                                        ->searchable()
+                                        ->options([
+                                            'AÇÃO JUDICIAL' => 'AÇÃO JUDICIAL',
+                                            'CEAF 1A - MS' => 'CEAF 1A - MS',
+                                            'CEAF 1B SESAB' => 'CEAF 1B SESAB',
+                                            'ENDEMIAS' => 'ENDEMIAS',
+                                            'MINISTÉRIO DA SAÚDE/JUDICIALIZAÇÃO' => 'MINISTÉRIO DA SAÚDE/JUDICIALIZAÇÃO',
+                                            'HEPATITES VIRAIS' => 'HEPATITES VIRAIS',
+                                            'HOSPITALAR' => 'HOSPITALAR',
+                                            'INSULINA DA ATENÇÃO BÁSICA' => 'INSULINA DA ATENÇÃO BÁSICA',
+                                            'ONCOLOGIA' => 'ONCOLOGIA',
+                                            'PROGRAMA DST/AIDS' => 'PROGRAMA DST/AIDS',
+                                            'PROTOCOLO ESTADUAL PALIVIZUMABE' => 'PROTOCOLO ESTADUAL PALIVIZUMABE',
+                                            'TUBERCULOSE' => 'TUBERCULOSE',
+                                        ])
+                                        ->columnSpan(2)
+                                        ->required(),
+
+                                    TextInput::make('medicament_lote')
+                                        ->label('Lote')
+                                        ->required(),
+
+                                    TextInput::make('unit_value')
+                                        ->label('Valor Unitário (R$)')
+                                        ->numeric()
+                                        ->step(0.01)
+                                        ->required(),
+                                ])
+                                ->columns(4)
+                                ->nullable()
+                                ->columnSpanFull(),
+
+                        ])
+                        ->columns(3),
+
+                    Wizard\Step::make('Pedido/Distribuição')
+                        ->schema([
+                            Forms\Components\TextInput::make('order_number')
+                                ->label('Número do Pedido')
+                                ->disabled(fn($get) => $get('boolean_unit'))
+                                ->maxLength(15),
+                            Forms\Components\TextInput::make('distribution_number')
+                                ->label('Número de Distribuição')
+                                ->disabled(fn($get) => $get('boolean_unit'))
+                                ->maxLength(15),
+                            // Toggle que define a resposta do laboratório
+                            Toggle::make('boolean_unit')
+                                ->label('Excursão proveniente de um pedido:')
+                                ->inline(false)
+                                ->offColor('success') // Cor quando desativado
+                                ->onColor('danger')  // Cor quando ativado
+                                ->offIcon('heroicon-m-check')
+                                ->onIcon('heroicon-m-x-mark')
+                                ->reactive() // Torna o campo reativo
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state) {
+                                    } else {
+                                        $set('distribution_number', null); // Reseta o texto
+                                        $set('order_number', null); // Reseta o texto
+                                        $set('observations', null); // Reseta o texto
+                                    }
+                                }),
+                            Forms\Components\RichEditor::make('observations')
+                                ->label('Observações')
+                                ->toolbarButtons([])
+                                ->columnSpanFull(),
+                        ])->columns(3),
+
+                    Wizard\Step::make('Análise Técnica')
+                        ->schema([
+                            Repeater::make('medicaments')
+                                ->label('Análise Técnica')
+                                ->schema([
+                                    TextInput::make('medicament_name')
+                                        ->label('Nome do Medicamento')
+                                        ->disabled()
+                                        ->columnSpan(2),
+                                    Forms\Components\Select::make('boolean_bula')
+                                        ->label('Situação')
+                                        ->native(false)
+                                        ->searchable()
+                                        ->options([
+                                            'ESTÁVEL' => 'ESTÁVEL',
+                                            'NÃO ESTÁVEL' => 'NÃO ESTÁVEL',
+                                            'SOLICITAR MAIS INFORMAÇÕES AO FABRICANTE' => 'SOLICITAR MAIS INFORMAÇÕES AO FABRICANTE',
+                                        ]),
+
+
+                                    // Campos adicionais que o usuário pode preencher
+                                    RichEditor::make('technical_analysis')
+                                        ->label('Análise Técnica')
+                                        ->toolbarButtons([])
+                                        ->columnSpanFull(),
+
+                                ])
+                                ->columnSpanFull()
+                                ->columns(3)
+                                ->addable(false)
+                                ->default(fn(Forms\ComponentContainer $form) => $form->getState()['medicaments'] ?? []),
                         ]),
-                    Wizard\Step::make('Informações do Laboratório')
+
+                    Wizard\Step::make('Análise Laboratorial')
                         ->schema([
                             // Toggle que define a resposta do laboratório
                             Toggle::make('resp_laboratory')
@@ -266,7 +376,7 @@ class StabilityConsultationResource extends Resource
                                 ->schema([
                                     // Campo para observações do laboratório
                                     Forms\Components\RichEditor::make('text_laboratory')
-                                        ->label('Observações do Laboratório')
+                                        ->label('Analise do Laboratório')
                                         ->toolbarButtons([
                                             'blockquote',
                                             'bold',
@@ -280,7 +390,7 @@ class StabilityConsultationResource extends Resource
                                             'undo',
                                         ])
                                         ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
-                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->disabled(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
                                         ->columnSpan(1), // Ocupa uma coluna
 
                                     // Campo para observações da unidade
@@ -299,7 +409,7 @@ class StabilityConsultationResource extends Resource
                                             'undo',
                                         ])
                                         ->requiredIf('resp_laboratory', true)  // Obrigatório se o toggle estiver ativado
-                                        ->hidden(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
+                                        ->disabled(fn($get) => !$get('resp_laboratory')) // Esconde se o toggle estiver desativado
                                         ->columnSpan(1), // Ocupa uma coluna
                                 ]),
 
