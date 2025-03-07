@@ -13,17 +13,26 @@ return new class extends Migration
     {
         Schema::create('analyses', function (Blueprint $table) {
             $table->id();
-            $table->boolean('resp_laboratory')->default(false);
-            $table->longText('text_laboratory')->nullable();
-            $table->longText('text_unidade')->nullable();
-            $table->json('medicaments')->nullable();
-            $table->foreignId('user_create_id')
+
+            // Informações laboratoriais
+            $table->boolean('lab_responsible')->default(false)->comment('Indica se há um responsável pelo laboratório');
+            $table->longText('lab_notes')->nullable()->comment('Notas do laboratório');
+            $table->longText('unit_notes')->nullable()->comment('Notas da unidade');
+
+            // Lista de medicamentos analisados
+            $table->json('medications')->nullable()->comment('Lista de medicamentos envolvidos na análise');
+
+            // Relacionamento com o usuário criador
+            $table->foreignId('created_by')
                 ->nullable()
                 ->constrained('users')
                 ->onDelete('set null')
-                ->default(1);
+                ->default(1)
+                ->comment('Usuário que criou o registro');
+
+            // Controle de registros
             $table->timestamps();
-            $table->softDeletes(); // Adiciona a coluna deleted_at
+            $table->softDeletes()->comment('Marca o registro como excluído sem removê-lo definitivamente');
         });
     }
 
