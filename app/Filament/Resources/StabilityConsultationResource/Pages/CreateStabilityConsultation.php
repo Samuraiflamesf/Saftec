@@ -18,6 +18,8 @@ class CreateStabilityConsultation extends CreateRecord
         // Adiciona o user_create_id ao array de dados antes de criar o registro
         $data['created_by'] = Auth::id();
 
+        $data['estabelecimento_id'] = Auth::user()->estabelecimento_id;
+
         return $data;
     }
 
