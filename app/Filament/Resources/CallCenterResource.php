@@ -42,6 +42,8 @@ use Rmsramos\Activitylog\Actions\ActivityLogTimelineTableAction;
 
 class CallCenterResource extends Resource
 {
+    protected static ?string $model = CallCenter::class;
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
@@ -49,11 +51,6 @@ class CallCenterResource extends Resource
                 $query->where('estabelecimento_id', auth()->user()->estabelecimento_id);
             });
     }
-
-    protected static ?string $model = CallCenter::class;
-
-    protected static ?string $modelLabel = 'Ouvidoria';
-
     public static function getNavigationBadge(): ?string
     {
         $query = static::getModel()::query();
@@ -65,20 +62,21 @@ class CallCenterResource extends Resource
         return $query->count();
     }
 
-
     protected static ?string $navigationIcon = 'heroicon-o-bookmark';
-
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-bookmark';
+        return 'lucide-message-square-text';
     }
+
+    protected static ?string $modelLabel = 'Ouvidoria';
     public static function getNavigationLabel(): string
     {
         return 'Ouvidoria';
     }
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Administração';
+        return 'Processos';
     }
 
     public static function form(Form $form): Form

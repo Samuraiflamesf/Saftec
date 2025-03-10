@@ -92,11 +92,11 @@ class StabilityConsultationResource extends Resource
     }
 
 
-    protected static ?string $navigationIcon = 'heroicon-o-plus-circle';
+    protected static ?string $navigationIcon = 'lucide-thermometer-snowflake';
 
     public static function getNavigationIcon(): string
     {
-        return 'heroicon-o-plus-circle';
+        return 'lucide-thermometer-snowflake';
     }
     public static function getNavigationLabel(): string
     {
@@ -104,7 +104,7 @@ class StabilityConsultationResource extends Resource
     }
     public static function getNavigationGroup(): ?string
     {
-        return 'Administração';
+        return 'Processos';
     }
     public static function form(Form $form): Form
     {

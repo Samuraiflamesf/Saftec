@@ -34,11 +34,11 @@ class EstabelecimentoResource extends Resource
     }
     public static function getNavigationLabel(): string
     {
-        return 'Estabelecimentos';
+        return 'Lista de Estabelecimentos';
     }
     public static function getNavigationGroup(): ?string
     {
-        return 'Configurações';
+        return 'Cadastros';
     }
     protected static ?int $navigationSort = 5;
 

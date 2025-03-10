@@ -33,7 +33,7 @@ class UserResource extends Resource
 
     protected static ?string $modelLabel = 'Usuário';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 1;
 
     public static function getNavigationBadge(): ?string
     {
@@ -45,7 +45,7 @@ class UserResource extends Resource
     }
     public static function getNavigationGroup(): ?string
     {
-        return 'Configurações';
+        return 'Cadastros';
     }
     public static function getNavigationIcon(): string
     {

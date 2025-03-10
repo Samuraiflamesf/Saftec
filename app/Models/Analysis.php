@@ -11,8 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Analysis extends Model
 {
-    use HasFactory;
-    use LogsActivity;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'lab_responsible',  // Responsável pelo laboratório

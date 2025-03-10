@@ -31,6 +31,20 @@ class AnalysisResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getNavigationIcon(): string
+    {
+        return 'heroicon-o-plus-circle';
+    }
+    protected static ?string $modelLabel = 'Analise';
+    public static function getNavigationLabel(): string
+    {
+        return 'Analise';
+    }
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Processos';
+    }
+    
     public static function form(Form $form): Form
     {
         return $form

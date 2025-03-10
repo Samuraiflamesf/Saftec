@@ -20,7 +20,7 @@ return new class extends Migration
 
             // Informações do estabelecimento
             $table->string('name')->comment('Nome do estabelecimento');
-            $table->string('macrorregiao')->comment('Macrorregião à qual o estabelecimento pertence');
+            $table->string('macrorregiao')->nullable()->comment('Macrorregião à qual o estabelecimento pertence');
 
             // Campos de controle
             $table->timestamps();
