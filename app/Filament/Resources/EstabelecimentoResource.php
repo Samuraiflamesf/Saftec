@@ -67,7 +67,6 @@ class EstabelecimentoResource extends Resource
                         'Macrorregião'
                     )
                     ->searchable()
-                    ->required()
                     ->options([
                         'Centro-Leste' => 'Centro-Leste',
                         'Centro-Norte' => 'Centro-Norte',

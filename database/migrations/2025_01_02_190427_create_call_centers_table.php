@@ -28,7 +28,7 @@ return new class extends Migration
             $table->date('response_date')->nullable()->comment('Data da resposta à solicitação');
 
             // Dados dos medicamentos
-            $table->json('medicamentos')->nullable()->comment('Lista de medicamentos envolvidos');
+            $table->json('medicaments')->nullable()->comment('Lista de medicamentos envolvidos');
 
             // Arquivos e anexos
             $table->text('mirror_file')->nullable()->comment('Arquivo de espelho vinculado');

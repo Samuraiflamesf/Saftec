@@ -60,7 +60,16 @@ class MedicamentResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nome do Medicamento')
+                    ->limit(20)
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('simpas')
+                    ->label('Codigo SIMPAS')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('observation')
+                    ->limit(20)
+                    ->label('Texto padrão'),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

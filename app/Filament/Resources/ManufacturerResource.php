@@ -76,7 +76,15 @@ class ManufacturerResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nome Completo')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('company_name')
+                    ->label('Razão Social')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('cnpj')
+                    ->label('CNPJ')
+                    ->searchable(),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

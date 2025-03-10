@@ -102,14 +102,13 @@ class UserResource extends Resource
                             ->numeric()
                             ->required()
                             ->maxLength(8),
-                        Forms\Components\TextInput::make('nome')
+                        Forms\Components\TextInput::make('name')
                             ->label('Nome')
                             ->required()
                             ->maxLength(70),
                         Select::make('macrorregiao')
                             ->label('Macrorregião')
                             ->searchable()
-                            ->required()
                             ->options([
                                 'Centro-Leste' => 'Centro-Leste',
                                 'Centro-Norte' => 'Centro-Norte',
