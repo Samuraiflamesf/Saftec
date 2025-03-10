@@ -16,7 +16,9 @@ class CreateStabilityConsultation extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Adiciona o user_create_id ao array de dados antes de criar o registro
-        $data['user_create_id'] = Auth::id();
+        $data['created_by'] = Auth::id();
+
+        $data['estabelecimento_id'] = Auth::user()->estabelecimento_id;
 
         return $data;
     }

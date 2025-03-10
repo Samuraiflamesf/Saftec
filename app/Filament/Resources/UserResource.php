@@ -92,7 +92,7 @@ class UserResource extends Resource
                     ->required(),
                 Select::make('estabelecimento_id')
                     ->label('Estabelecimento')
-                    ->relationship(name: 'estabelecimento', titleAttribute: 'nome')
+                    ->relationship(name: 'estabelecimento', titleAttribute: 'name')
                     ->preload()
                     ->searchable()
                     ->required()

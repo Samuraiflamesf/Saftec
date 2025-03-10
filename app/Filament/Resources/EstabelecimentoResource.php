@@ -10,6 +10,7 @@ use App\Models\Estabelecimento;
 use Filament\Resources\Resource;
 use Filament\Forms\Components\Select;
 use Illuminate\Database\Eloquent\Builder;
+use Leandrocfe\FilamentPtbrFormFields\Document;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\EstabelecimentoResource\Pages;
 use App\Filament\Resources\EstabelecimentoResource\RelationManagers;
@@ -51,12 +52,16 @@ class EstabelecimentoResource extends Resource
                     ->numeric()
                     ->required()
                     ->maxLength(8),
-                Forms\Components\TextInput::make('nome')
-                    ->label(
-                        'Nome'
-                    )
+                Forms\Components\TextInput::make('name')
+                    ->label('Nome')
                     ->required()
                     ->maxLength(70),
+                Document::make('cnpj')
+                    ->label('CNPJ:')
+                    ->rule('cnpj')
+                    ->validation(false)  // Remover em produção
+                    ->cnpj('99999999/9999-99')
+                    ->helperText('Insira o CNPJ no formato: 00000000/0000-00'),
                 Select::make('macrorregiao')
                     ->label(
                         'Macrorregião'

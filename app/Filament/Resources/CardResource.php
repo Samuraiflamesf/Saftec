@@ -65,13 +65,13 @@ class CardResource extends Resource
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                TextInput::make('nome')
+                                TextInput::make('name')
                                     ->label('Nome')
                                     ->required()
                                     ->maxLength(35)
                                     ->columnSpan(1),
 
-                                Select::make('tipo')
+                                Select::make('type')
                                     ->label('Tipo')
                                     ->options([
                                         'dashboard' => 'Dashboard',
@@ -82,19 +82,19 @@ class CardResource extends Resource
                                     ->columnSpan(1),
                             ]),
 
-                        Textarea::make('descricao')
+                        Textarea::make('description')
                             ->label('Descrição')
                             ->required()
                             ->maxLength(150)
                             ->columnSpanFull(),
 
-                        TextInput::make('link')
-                            ->label('Link')
+                        TextInput::make('url')
+                            ->label('URL')
                             ->url()
                             ->required()
                             ->columnSpanFull(),
 
-                        FileUpload::make('imagem')
+                        FileUpload::make('image_path')
                             ->label('Imagem do Card')
                             ->image()
                             ->disk('s3')  // Define o disco, podendo ser "public" ou outro disco configurado.
@@ -112,19 +112,20 @@ class CardResource extends Resource
     {
         return $table
             ->columns([
-                ImageColumn::make('imagem')
-                    ->circular() // Deixa a imagem arredondada
+                ImageColumn::make('image_path')
+                    ->circular() // Deixa a image_path arredondada
                     ->size(50), // Define um tamanho fixo para manter a consistência
 
-                TextColumn::make('nome')
+                TextColumn::make('name')
+                    ->label('Nome')
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('descricao')
+                TextColumn::make('description')
                     ->limit(50)
                     ->label('Descrição'),
 
-                IconColumn::make('tipo')
+                IconColumn::make('type')
                     ->label('Tipo')
                     ->icon(fn(string $state): string => match ($state) {
                         'ferramenta' => 'heroicon-o-wrench',
@@ -135,7 +136,7 @@ class CardResource extends Resource
                         'dashboard' => 'success',
                         default => 'gray',
                     }),
-                IconColumn::make('link')
+                IconColumn::make('url')
                     ->label('Acessar') // Nome mais intuitivo
                     ->icon('heroicon-o-link') // Ícone de link
                     ->color('primary') // Cor azul para destacar
@@ -144,7 +145,7 @@ class CardResource extends Resource
             ])
 
             ->filters([
-                SelectFilter::make('tipo')
+                SelectFilter::make('type')
                     ->label('Tipo')
                     ->options([
                         'dashboard' => 'Dashboard',
@@ -161,7 +162,7 @@ class CardResource extends Resource
                     ->color('primary')
             )
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

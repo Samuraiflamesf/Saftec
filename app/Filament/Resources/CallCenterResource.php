@@ -86,7 +86,6 @@ class CallCenterResource extends Resource
         return $form
             ->schema([
                 Wizard::make([
-
                     Wizard\Step::make('Detalhes Gerais')
                         ->schema([
                             // Protocolo
@@ -147,7 +146,7 @@ class CallCenterResource extends Resource
                                 ->columnSpan(3),
 
                             // Data da última dispensação
-                            DatePicker::make('date_dispensacao')
+                            DatePicker::make('dispensation_date')
                                 ->label('Data da última dispensação:')
                                 ->columnSpan(3),
                         ])
@@ -159,7 +158,7 @@ class CallCenterResource extends Resource
                             Repeater::make('medicamentos')
                                 ->label('Medicamentos')
                                 ->schema([
-                                    TextInput::make('medicamento')
+                                    TextInput::make('medicament')
                                         ->label('Adicionar Medicamento:')
                                         ->placeholder('Informe o nome do medicamento')
                                         ->required(),
@@ -182,12 +181,12 @@ class CallCenterResource extends Resource
                                 ->preload()
                                 ->searchable()
                                 ->required(),
-                            DatePicker::make('date_resposta')
+                            DatePicker::make('response_date')
                                 ->label('Data da resposta:')
                                 ->minDate(now()->subYears(150))
                                 ->maxDate(now()),
 
-                            RichEditor::make('obs')
+                            RichEditor::make('observation')
                                 ->label('Campo de Observação:')
                                 ->disableToolbarButtons([
                                     'blockquote',
@@ -198,7 +197,7 @@ class CallCenterResource extends Resource
                         ])->columns(2),
                     Wizard\Step::make('Anexos')
                         ->schema([
-                            FileUpload::make('file_espelho')
+                            FileUpload::make('mirror_file')
                                 ->label('Anexo do Espelho:')
                                 ->acceptedFileTypes(['application/pdf'])
                                 ->maxSize(5128)
@@ -326,7 +325,7 @@ class CallCenterResource extends Resource
                         TextEntry::make('resp_aquisicao')
                             ->label('Responsável da Aquisição:')
                             ->placeholder('Não Informada'),
-                        TextEntry::make('date_dispensacao')
+                        TextEntry::make('dispensation_date')
                             ->label('Data de Dispensação')
                             ->placeholder('Não Informada')
                             ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y H:i') : 'Não Informada'),
@@ -344,23 +343,21 @@ class CallCenterResource extends Resource
                     ->columns(2),
                 Fieldset::make('Observações')
                     ->schema([
-                        TextEntry::make('date_resposta')
+                        TextEntry::make('response_date')
                             ->label(
                                 'Data de Resposta'
                             )
                             ->formatStateUsing(fn($state) => $state ? \Carbon\Carbon::parse($state)->format('d/m/Y') : 'Não Informada'),
-                        TextEntry::make('user.name')
+                        TextEntry::make('author.name')
                             ->label('Autor da Resposta')
                             ->color('primary'),
-                        TextEntry::make('obs')
+                        TextEntry::make('observation')
                             ->label('Observações')
                             ->columnSpan(2) // Ocupar duas colunas
                             ->placeholder('Sem Observações')
                             ->markdown(),
                     ])
                     ->columns(2),
-
-
             ])->columnSpan(2),
 
             // Segunda seção: informações adicionais e agrupadas
@@ -378,7 +375,7 @@ class CallCenterResource extends Resource
                     ->label('Responsável pelo Preenchimento')
                     ->color('info'),
 
-                TextEntry::make('file_espelho')
+                TextEntry::make('mirror_file')
                     ->label('Anexo do Espelho:')
                     ->placeholder('Sem anexo do espelho')
                     ->listWithLineBreaks()->bulleted()

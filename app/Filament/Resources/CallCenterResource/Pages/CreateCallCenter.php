@@ -14,11 +14,14 @@ class CreateCallCenter extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Adiciona o user_create_id ao array de dados antes de criar o registro
-        $data['user_create_id'] = Auth::id();
+        // Adiciona o ID do usuário autenticado no campo 'created_by'
+        $data['created_by'] = Auth::id();
+
+        $data['estabelecimento_id'] = Auth::user()->estabelecimento_id;
 
         return $data;
     }
+
     protected function getCreateFormAction(): Action
     {
         return parent::getCreateFormAction()
